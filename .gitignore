@@ -1,0 +1,11 @@
+# Node.js
+**/node_modules/
+**/dist/
+.env
+
+# Flutter
+**/build/
+**/.dart_tool/
+**/.flutter-plugins
+**/.flutter-plugins-dependencies
+**/generated_plugin_registrant.dart
