@@ -1,112 +1,94 @@
+import 'package:bridging_students_and_academics_platform/controllers/admin_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class AdminTasksPage extends StatelessWidget {
   const AdminTasksPage({super.key});
 
-  // ---------------- MOCK DATA ----------------
-
-  final List<Map<String, String>> supervisors = const [
-    {"id": "s1", "name": "Hassan Ali"},
-    {"id": "s2", "name": "Amina Noor"},
-  ];
-
-  final List<Map<String, String>> groups = const [
-    {"id": "g1", "name": "Group A", "supervisorId": "s1"},
-    {"id": "g2", "name": "Group B", "supervisorId": "s2"},
-  ];
-
-  final List<Map<String, String>> tasks = const [
-    {
-      "title": "Database Design",
-      "status": "Pending",
-      "supervisorId": "s1",
-      "groupId": "g1",
-    },
-    {
-      "title": "UI Implementation",
-      "status": "In Progress",
-      "supervisorId": "s2",
-      "groupId": "g2",
-    },
-    {
-      "title": "Final Report",
-      "status": "Completed",
-      "supervisorId": "s1",
-      "groupId": "g1",
-    },
-  ];
-
-  // ---------------- HELPERS ----------------
-
-  String supervisorName(String id) {
-    return supervisors.firstWhere((s) => s["id"] == id)["name"]!;
-  }
-
-  String groupName(String id) {
-    return groups.firstWhere((g) => g["id"] == id)["name"]!;
-  }
-
   Color statusColor(String status) {
-    switch (status) {
-      case "Completed":
-        return const Color.fromARGB(255, 57, 108, 59);
-      case "In Progress":
-        return const Color.fromARGB(255, 129, 92, 35);
-      default:
-        return const Color.fromARGB(255, 209, 32, 19);
+    status = status.toLowerCase();
+    if (status.contains('complete') || status.contains('graded')) {
+      return const Color(0xFF4A6D3F);
+    } else if (status.contains('progress') || status.contains('submitted')) {
+      return Colors.amber.shade800;
+    } else {
+      return Colors.red.shade400;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final AdminController controller = Get.find<AdminController>();
+
     return Padding(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "All Tasks (Admin View)",
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                "Tasks Overview",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, fontFamily: 'InriaSerif'),
+              ),
+              Obx(() => Text("${controller.adminTasks.length} Total", style: const TextStyle(color: Colors.grey))),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 15),
 
           Expanded(
-            child: ListView.builder(
-              itemCount: tasks.length,
-              itemBuilder: (context, index) {
-                final task = tasks[index];
+            child: Obx(() {
+              if (controller.adminTasks.isEmpty) {
+                return const Center(child: Text("No tasks found."));
+              }
 
-                return Card(
-                  elevation: 4,
-                  child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: statusColor(task["status"]!),
-                      child: const Icon(Icons.task, color: Colors.white),
+              return ListView.builder(
+                itemCount: controller.adminTasks.length,
+                itemBuilder: (context, index) {
+                  final task = controller.adminTasks[index];
+                  final String title = task['title'] ?? 'No Title';
+                  final String group = task['groupId']?['name'] ?? 'Unknown Group';
+                  final String supervisor = task['createdBy']?['name'] ?? 'System';
+                  const String status = "Active"; // Tasks in this model don't have a status, but we can assume Active
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      side: BorderSide(color: Colors.grey.withOpacity(0.1)),
                     ),
-                    title: Text(task["title"]!),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          "Supervisor: ${supervisorName(task["supervisorId"]!)}",
-                        ),
-                        Text(
-                          "Group: ${groupName(task["groupId"]!)}",
-                        ),
-                      ],
-                    ),
-                    trailing: Chip(
-                      label: Text(
-                        task["status"]!,
-                        style: const TextStyle(color: Colors.white),
+                    child: ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      leading: CircleAvatar(
+                        backgroundColor: const Color(0xFFE8F1E4),
+                        child: Icon(Icons.assignment_outlined, color: const Color(0xFF4A6D3F)),
                       ),
-                      backgroundColor:
-                          statusColor(task["status"]!),
+                      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15)),
+                      subtitle: Padding(
+                        padding: const EdgeInsets.only(top: 4.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text("Group: $group", style: const TextStyle(fontSize: 12)),
+                            Text("By: $supervisor", style: const TextStyle(fontSize: 12, color: Colors.grey)),
+                          ],
+                        ),
+                      ),
+                      trailing: Container(
+                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                         decoration: BoxDecoration(
+                           color: const Color(0xFFE8F1E4),
+                           borderRadius: BorderRadius.circular(10),
+                         ),
+                         child: Text("Active", style: TextStyle(color: const Color(0xFF4A6D3F), fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),

@@ -10,4 +10,4 @@ const SubmissionSchema = new mongoose.Schema({
   feedback: { type: String, default: '' }
 }, { timestamps: true });
 
-module.exports = mongoose.model('Submission', SubmissionSchema);
+module.exports = mongoose.models.Submission || mongoose.model('Submission', SubmissionSchema);

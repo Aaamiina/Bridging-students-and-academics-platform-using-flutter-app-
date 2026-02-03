@@ -1,14 +1,14 @@
 import 'package:flutter/material.dart';
 
-class GroupMembersPage extends StatefulWidget {
+class SupervisorGroupMembersPage extends StatefulWidget {
   final String groupName;
-  const GroupMembersPage({super.key, required this.groupName});
+  const SupervisorGroupMembersPage({super.key, required this.groupName});
 
   @override
-  State<GroupMembersPage> createState() => _GroupMembersPageState();
+  State<SupervisorGroupMembersPage> createState() => _SupervisorGroupMembersPageState();
 }
 
-class _GroupMembersPageState extends State<GroupMembersPage> {
+class _SupervisorGroupMembersPageState extends State<SupervisorGroupMembersPage> {
   // Mock data for members
   final List<Map<String, String>> members = List.generate(
     5,

@@ -102,7 +102,7 @@ class StudentDashboard extends StatelessWidget {
 Navigator.pushReplacement(
       context,
       PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => const TaskListPage(),
+        pageBuilder: (context, animation1, animation2) => TaskListPage(),
         transitionDuration: Duration.zero, // Instant transition to match Nav Bar feel
       ),
     );              },

@@ -153,7 +153,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
           Widget page;
           switch (index) {
             case 0:
-              page = const SupervisorGroupsPage();
+              page =  SupervisorGroupsPage();
               break;
             case 1:
               page = const TaskPage();
@@ -165,7 +165,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
               page = const ProfilePageSup();
               break;
             default:
-              page = const SupervisorGroupsPage();
+              page =  SupervisorGroupsPage();
           }
 
           Navigator.pushReplacement(

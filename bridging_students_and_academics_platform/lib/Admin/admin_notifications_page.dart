@@ -72,14 +72,18 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
   @override
   Widget build(BuildContext context) {
+    const Color brandGreen = Color(0xFF4A6D3F);
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF6F8F5),
+      backgroundColor: const Color(0xFFF1F1F1),
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFF4F7F3B),
+        backgroundColor: brandGreen,
+        elevation: 0,
         title: const Text(
           "Notifications",
           style: TextStyle(
+            color: Colors.white,
             fontFamily: 'InriaSerif',
             fontWeight: FontWeight.bold,
           ),
@@ -99,12 +103,12 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               color: isRead ? Colors.white : const Color(0xFFE8F1E4),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(15),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.08),
-                  blurRadius: 6,
-                  offset: const Offset(0, 3),
+                if (isRead) BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
                 ),
               ],
             ),
@@ -114,10 +118,11 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
                 CircleAvatar(
                   radius: 22,
                   backgroundColor:
-                      _colorByType(n["type"]).withOpacity(0.15),
+                      _colorByType(n["type"]).withOpacity(0.1),
                   child: Icon(
                     _iconByType(n["type"]),
                     color: _colorByType(n["type"]),
+                    size: 20,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -157,10 +162,11 @@ class _AdminNotificationsPageState extends State<AdminNotificationsPage> {
 
                 if (!isRead)
                   Container(
+                    margin: const EdgeInsets.only(top: 5),
                     width: 8,
                     height: 8,
                     decoration: const BoxDecoration(
-                      color: Colors.red,
+                      color: brandGreen,
                       shape: BoxShape.circle,
                     ),
                   ),

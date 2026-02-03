@@ -1,49 +1,41 @@
-import 'package:flutter/material.dart';
-import 'dashboard_page.dart';
-import 'task_list_page.dart';
-import 'feedback_page.dart';
-import 'profile_page.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class CustomNavBar extends StatelessWidget {
   final int currentIndex;
+
   const CustomNavBar({super.key, required this.currentIndex});
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: Color(0xFF4A6D3F),
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF4F7F3B),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.1),
+            blurRadius: 10,
+            offset: const Offset(0, -5),
+          ),
+        ],
       ),
       child: ClipRRect(
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
         child: BottomNavigationBar(
           currentIndex: currentIndex,
           type: BottomNavigationBarType.fixed,
-          backgroundColor: Colors.transparent,
+          backgroundColor: const Color(0xFF4F7F3B),
           elevation: 0,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white60,
           onTap: (index) {
             if (index == currentIndex) return;
-            Widget page;
             switch (index) {
-              case 0: page = const StudentDashboard(); break;
-              case 1: page = const TaskListPage(); break;
-              case 2: page = const FeedbackPage(); break;
-              case 3: page = const ProfilePage(); break;
-              default: page = const StudentDashboard();
+              case 0: Get.offAllNamed('/student_dashboard'); break;
+              case 1: Get.offAllNamed('/student_tasks'); break;
+              case 2: Get.offAllNamed('/student_feedback'); break;
+              case 3: Get.offAllNamed('/student_profile'); break;
+              default: Get.offAllNamed('/student_dashboard');
             }
-            Navigator.pushReplacement(
-              context, 
-              PageRouteBuilder(pageBuilder: (_, __, ___) => page, transitionDuration: Duration.zero)
-            );
           },
           items: const [
             BottomNavigationBarItem(icon: Icon(Icons.grid_view_sharp), label: 'Dashboard'),

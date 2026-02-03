@@ -1,9 +1,7 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 
 class ApiLogin {
-  // Replace with your server's IP (use 10.0.2.2 for Android Emulator)
-  static const String baseUrl = "http://172.22.115.99:5000/api";
+  static const String baseUrl = AppConfig.baseUrl;
   static String? _token;
 
   // 1. LOGIN API (Reflecting Frame 56/54)

@@ -1,88 +1,31 @@
-import 'package:bridging_students_and_academics_platform/Student/dashboard_page.dart';
-import 'package:bridging_students_and_academics_platform/Admin/admin_dashboard.dart';
-import 'package:bridging_students_and_academics_platform/Supervisor/group/supervisor_groups_page.dart';
+import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
 import 'package:bridging_students_and_academics_platform/log_admin.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
-}
-
-class _LoginPageState extends State<LoginPage> {
-  bool _isSupervisor = true; // Switch between Supervisor / Student
-
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    // AuthController is now initialized in main.dart globally
+    final AuthController authController = Get.find<AuthController>();
+    final TextEditingController emailController = TextEditingController();
+    final TextEditingController passwordController = TextEditingController();
+    // Using RxBool for local UI toggle state
+    final RxBool isSupervisor = true.obs;
+
     return SafeArea(
       child: Scaffold(
         backgroundColor: Colors.white,
         body: Stack(
           children: [
-            // TOP RIGHT CIRCLES
-            Positioned(
-              top: -50,
-              right: -5,
-              child: Container(
-                width: 110,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.3),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              top: -20,
-              right: -20,
-              child: Container(
-                width: 110,
-                height: 110,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4C763B),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-      
-            // BOTTOM LEFT CIRCLES
-            Positioned(
-              bottom: -50,
-              left: -10,
-              child: Container(
-                width: 120,
-                height: 200,
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.25),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-            Positioned(
-              bottom: -25,
-              left: -25,
-              child: Container(
-                width: 120,
-                height: 120,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4F7F3B),
-                  shape: BoxShape.circle,
-                ),
-              ),
-            ),
-      
+            // DECORATIVE CIRCLES
+            Positioned(top: -50, right: -5, child: _circle(110, 200, Colors.green.withOpacity(0.3))),
+            Positioned(top: -20, right: -20, child: _circle(110, 110, const Color(0xFF4C763B))),
+            Positioned(bottom: -50, left: -10, child: _circle(120, 200, Colors.green.withOpacity(0.25))),
+            Positioned(bottom: -25, left: -25, child: _circle(120, 120, const Color(0xFF4F7F3B))),
+
             // MAIN CARD
             Center(
               child: SingleChildScrollView(
@@ -105,77 +48,81 @@ class _LoginPageState extends State<LoginPage> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // LOGIN TYPE SWITCH
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            _switchButton("Supervisor", _isSupervisor, true),
-                            _switchButton("Student", !_isSupervisor, false),
-                          ],
-                        ),
+                        Obx(() => Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                _switchButton("Supervisor", isSupervisor.value, true, isSupervisor),
+                                _switchButton("Student", !isSupervisor.value, false, isSupervisor),
+                              ],
+                            )),
                         const SizedBox(height: 20),
-      
+
                         Center(
-                          child: Text(
-                            _isSupervisor ? "SUPERVISOR LOGIN" : "STUDENT LOGIN",
-                            style: TextStyle(
-                              fontFamily: 'InriaSerif',
-                              color: Colors.green.shade800,
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 1,
-                            ),
-                          ),
+                          child: Obx(() => Text(
+                                isSupervisor.value ? "ACADEMIC LOGIN" : "STUDENT LOGIN",
+                                style: TextStyle(
+                                  fontFamily: 'InriaSerif',
+                                  color: Colors.green.shade800,
+                                  fontSize: 22,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              )),
                         ),
                         const SizedBox(height: 25),
-      
-                        _label("Email"),
-                        _shadowInput(controller: _emailController),
-      
+
+                        Obx(() => _label(isSupervisor.value ? "Academic Email" : "University ID")),
+                        Obx(() => _shadowInput(
+                          controller: emailController, 
+                          hintText: isSupervisor.value ? "supervisor@example.com" : "Registration ID"
+                        )),
+
                         _label("Password"),
-                        _shadowInput(controller: _passwordController, isPassword: true),
-      
+                        _shadowInput(controller: passwordController, isPassword: true),
+
                         const SizedBox(height: 25),
-      
+
                         SizedBox(
                           width: double.infinity,
                           height: 45,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              if (_isSupervisor) {
-                                Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) => SupervisorGroupsPage()));
-                              } else {
-                                // TODO: Student home page
-                                 Navigator.push(context,
-                                    MaterialPageRoute(builder: (context) => StudentDashboard()));
-                              
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: const Color(0xFF4F7F3B),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                            ),
-                            child: const Text(
-                              "Login",
-                              style: TextStyle(
-                                fontFamily: 'InriaSerif',
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
+                          child: Obx(() => ElevatedButton(
+                                onPressed: authController.isLoading.value
+                                    ? null
+                                    : () {
+                                        print("DEBUG: Login button pressed in UI");
+                                        authController.login(
+                                          emailController.text,
+                                          passwordController.text,
+                                          isSupervisor.value,
+                                        );
+                                      },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: const Color(0xFF4F7F3B),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                ),
+                                child: authController.isLoading.value
+                                    ? const CircularProgressIndicator(color: Colors.white)
+                                    : const Text(
+                                        "Login",
+                                        style: TextStyle(
+                                          fontFamily: 'InriaSerif',
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                              )),
                         ),
-      
+
                         const SizedBox(height: 15),
-      
+
                         Center(
                           child: TextButton(
                             onPressed: () {
-                              Navigator.push(context,
-                                  MaterialPageRoute(builder: (context) => logAdmin()));
+                               // Assuming logAdmin is still manual nav or needs refactor later
+                               Get.toNamed('/admin_login');
                             },
                             child: const Text(
                               "Login As Admin",
@@ -199,19 +146,25 @@ class _LoginPageState extends State<LoginPage> {
     );
   }
 
+  Widget _circle(double w, double h, Color color) {
+    return Container(
+      width: w,
+      height: h,
+      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+    );
+  }
+
   // SWITCH BUTTON
-  Widget _switchButton(String text, bool active, bool isSupervisor) {
+  Widget _switchButton(String text, bool active, bool stateValue, RxBool stateController) {
     return GestureDetector(
       onTap: () {
-        setState(() {
-          _isSupervisor = isSupervisor;
-        });
+        stateController.value = stateValue;
       },
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 5),
         padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 20),
         decoration: BoxDecoration(
-          color: active ? Color(0xFF4F7F3B) : Colors.white,
+          color: active ? const Color(0xFF4F7F3B) : Colors.white,
           borderRadius: BorderRadius.circular(25),
           border: Border.all(color: Colors.green.shade800),
         ),
@@ -243,7 +196,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   // SHADOW INPUT
-  Widget _shadowInput({required TextEditingController controller, bool isPassword = false}) {
+  Widget _shadowInput({required TextEditingController controller, bool isPassword = false, String? hintText}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -259,9 +212,11 @@ class _LoginPageState extends State<LoginPage> {
       child: TextField(
         controller: controller,
         obscureText: isPassword,
-        decoration: const InputDecoration(
+        decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          hintText: hintText,
+          hintStyle: const TextStyle(color: Colors.grey),
         ),
       ),
     );

@@ -1,10 +1,16 @@
 import 'package:bridging_students_and_academics_platform/Admin/admin_notifications_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_submissions_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_tasks_page.dart';
+import 'package:bridging_students_and_academics_platform/Admin/admin_profile_page.dart';
 import 'package:flutter/material.dart';
-import 'users_page.dart';
-import 'groups_page.dart';
-
+import 'package:get/get.dart';
+import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
+import 'package:bridging_students_and_academics_platform/Admin/Supervisor_management.dart';
+import 'package:bridging_students_and_academics_platform/Admin/users_page.dart';
+import 'package:bridging_students_and_academics_platform/Admin/groups_page.dart';
+import 'package:bridging_students_and_academics_platform/Admin/admin_stats_view.dart';
+import 'package:bridging_students_and_academics_platform/controllers/admin_controller.dart';
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 
 class AdminDashboard extends StatefulWidget {
   const AdminDashboard({super.key});
@@ -18,26 +24,37 @@ class _AdminDashboardState extends State<AdminDashboard> {
   final Color brandGreen = const Color(0xFF4A6D3F);
 
   // FULL LIST OF ALL SECTIONS
-  final List<Widget> pages = const [
-    Center(child: Text("Dashboard Home")), 
-    AdminUsersPage(),
-    Center(child: Text("Supervisors Management")), 
-    GroupsPage(),
-    AdminTasksPage(),       
-    AdminSubmissionsPage(), 
-    AdminNotificationsPage(), 
-    Center(child: Text("Profile Settings")),
-  ];
+  late final List<Widget> pages;
+
+  @override
+  void initState() {
+    print("DEBUG: AdminDashboard.initState - Mounting...");
+    super.initState();
+    // Initialize AdminController once for the whole dashboard
+    print("DEBUG: AdminDashboard - Putting AdminController");
+    Get.put(AdminController());
+    
+    pages = [
+      AdminStatsView(onCardTap: (index) => setState(() => selectedIndex = index)), 
+      const AdminUsersPage(),
+      SupervisorManagementPage(), 
+      GroupsPage(),
+      const AdminTasksPage(),       
+      const AdminSubmissionsPage(), 
+      const AdminNotificationsPage(), 
+      const AdminProfilePage(),
+    ];
+  }
 
   final List<String> titles = [
-    "Dashboard",
-    "Users Management",
-    "Supervisors",
-    "Groups",
-    "Tasks",
-    "Submissions",
-    "Notifications",
-    "Profile"
+    "DASHBOARD",
+    "USERS",
+    "SUPERVISORS",
+    "GROUPS",
+    "TASKS",
+    "SUBMISSIONS",
+    "NOTIFICATIONS",
+    "PROFILE",
   ];
 
   @override
@@ -57,6 +74,21 @@ class _AdminDashboardState extends State<AdminDashboard> {
             letterSpacing: 1.2,
           ),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.bug_report, color: Colors.white),
+            tooltip: 'Debug Session',
+            onPressed: () {
+              final token = Get.find<AuthController>().token;
+               Get.defaultDialog(
+                title: "CURRENT SESSION",
+                middleText: "Token: ${token != null && token.isNotEmpty ? 'EXISTS (${token.substring(0,10)}...)' : 'EMPTY/NULL'}",
+                textConfirm: "OK",
+                onConfirm: () => Get.back(),
+              );
+            },
+          )
+        ],
       ),
       drawer: _buildDrawer(),
       body: pages[selectedIndex],
@@ -64,18 +96,30 @@ class _AdminDashboardState extends State<AdminDashboard> {
   }
 
   Widget _buildDrawer() {
+    final authController = Get.find<AuthController>();
     return Drawer(
       child: Column(
         children: [
-          UserAccountsDrawerHeader(
-            decoration: BoxDecoration(color: brandGreen),
-            currentAccountPicture: const CircleAvatar(
-              backgroundColor: Colors.white, 
-              child: Icon(Icons.admin_panel_settings, size: 40, color: Color(0xFF4A6D3F))
-            ),
-            accountName: const Text("Admin User", style: TextStyle(fontWeight: FontWeight.bold)),
-            accountEmail: const Text("admin@academics.edu"),
-          ),
+          Obx(() {
+            final user = authController.user.value;
+            final name = user?.name ?? "Admin User";
+            final email = user?.email ?? "admin@academics.edu";
+            
+            return UserAccountsDrawerHeader(
+              decoration: BoxDecoration(color: brandGreen),
+              currentAccountPicture: CircleAvatar(
+                backgroundColor: Colors.white,
+                backgroundImage: (user?.profileImage != null && user!.profileImage!.isNotEmpty)
+                  ? NetworkImage("${AppConfig.imageBaseUrl}${user.profileImage}")
+                  : null,
+                child: (user?.profileImage == null || user!.profileImage!.isEmpty)
+                  ? Icon(Icons.admin_panel_settings, size: 40, color: brandGreen)
+                  : null,
+              ),
+              accountName: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
+              accountEmail: Text(email),
+            );
+          }),
           
           // SCROLLABLE MENU ITEMS
           Expanded(
@@ -101,7 +145,10 @@ class _AdminDashboardState extends State<AdminDashboard> {
           ListTile(
             leading: const Icon(Icons.logout, color: Colors.redAccent),
             title: const Text("Logout", style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
-            onTap: () => Navigator.pushReplacementNamed(context, '/login'),
+            onTap: () {
+               // Ensure AuthController is available or use Get.find
+               Get.find<AuthController>().logout();
+            },
           ),
           const SizedBox(height: 20),
         ],

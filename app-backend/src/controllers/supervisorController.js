@@ -33,13 +33,33 @@ exports.gradeSubmission = async (req, res) => {
     const { marks, feedback } = req.body;
     const submission = await Submission.findByIdAndUpdate(
       req.params.id,
-      { 
+      {
         grade: { marks, feedback, gradedAt: Date.now() },
-        status: 'Graded' 
+        status: 'Graded'
       },
       { new: true }
     );
     res.json(submission);
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+};
+
+// controllers/supervisorController.js
+exports.getMyGroups = async (req, res) => {
+  try {
+    // We search for groups where the LOGGED-IN user is the ASSIGNED supervisor
+    const groups = await Group.find({ supervisorId: req.user.id }); 
+    
+    const groupsWithCounts = await Promise.all(groups.map(async (group) => {
+      const memberCount = await User.countDocuments({ group: group._id });
+      return {
+        ...group.toObject(),
+        memberCount
+      };
+    }));
+    
+    res.json(groupsWithCounts);
   } catch (err) {
     res.status(500).send('Server Error');
   }

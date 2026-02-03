@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+
 const SubmissionSchema = new mongoose.Schema({
   taskId: { type: mongoose.Schema.Types.ObjectId, ref: 'Task' },
   studentId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
@@ -10,4 +12,5 @@ const SubmissionSchema = new mongoose.Schema({
     gradedAt: Date
   }
 }, { timestamps: true });
-module.exports = mongoose.model('Submission', SubmissionSchema);
+
+module.exports = mongoose.models.Submission || mongoose.model('Submission', SubmissionSchema);

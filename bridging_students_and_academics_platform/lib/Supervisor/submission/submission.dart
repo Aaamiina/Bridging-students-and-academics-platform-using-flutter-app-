@@ -1,9 +1,7 @@
-import 'package:bridging_students_and_academics_platform/Supervisor/group/supervisor_groups_page.dart';
-import 'package:bridging_students_and_academics_platform/Supervisor/profile/profile_page.dart';
-import 'package:bridging_students_and_academics_platform/Supervisor/submission/evaluate_submission_page.dart';
-import 'package:bridging_students_and_academics_platform/Supervisor/tasks/task_Page.dart';
 import 'package:flutter/material.dart';
 import 'package:bridging_students_and_academics_platform/Supervisor/custom/custom_bottom_bar.dart';
+import 'package:bridging_students_and_academics_platform/Supervisor/submission/evaluate_submission_page.dart';
+import 'package:get/get.dart';
 
 class SubmissionPage extends StatefulWidget {
   const SubmissionPage({super.key});
@@ -65,32 +63,13 @@ class _SubmissionPageState extends State<SubmissionPage> {
   currentIndex: _selectedIndex, // 0 for Groups, 1 for Tasks, etc.
   onTap: (index) {
     if (index == _selectedIndex) return;
-
-    Widget page;
     switch (index) {
-      case 0:
-        page = const SupervisorGroupsPage(); // Frame 39
-        break;
-      case 1:
-        page = const TaskPage(); // Frame 40/41
-        break;
-      case 2:
-        page = const SubmissionPage(); // Frame 44
-        break;
-      case 3:
-        page = const ProfilePageSup(); // Frame 46
-        break;
-      default:
-        page = const SupervisorGroupsPage();
+      case 0: Get.offAllNamed('/supervisor_dashboard'); break;
+      case 1: Get.offAllNamed('/supervisor_tasks'); break;
+      case 2: Get.offAllNamed('/supervisor_submissions'); break;
+      case 3: Get.offAllNamed('/supervisor_profile'); break;
+      default: Get.offAllNamed('/supervisor_dashboard');
     }
-
-    Navigator.pushReplacement(
-      context,
-      PageRouteBuilder(
-        pageBuilder: (context, animation1, animation2) => page,
-        transitionDuration: Duration.zero,
-      ),
-    );
   },
 ),
     );

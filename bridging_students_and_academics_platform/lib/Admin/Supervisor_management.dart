@@ -1,17 +1,17 @@
+import 'package:bridging_students_and_academics_platform/controllers/admin_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 
 class SupervisorManagementPage extends StatelessWidget {
-  const SupervisorManagementPage({super.key});
+  SupervisorManagementPage({super.key});
+
+  final AdminController controller = Get.find<AdminController>();
 
   @override
   Widget build(BuildContext context) {
-    // GlobalKey to control the scaffold (useful if you want to open drawer via button)
-    final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
-
     return Scaffold(
-      key: _scaffoldKey,
       backgroundColor: const Color(0xFFF1F4F0),
-
       body: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -27,47 +27,57 @@ class SupervisorManagementPage extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              children: [
-                _buildUserCard(
-                  name: "Ahmed Ali",
-                  username: "RayanAhmed . student",
-                  role: "Supervisor",
-                  isAssigned: false,
-                ),
-                const SizedBox(height: 15),
-                _buildUserCard(
-                  name: "Sofia Hussein",
-                  username: "RayanAhmed . student",
-                  role: "Supervisor",
-                  isAssigned: true,
-                  assignedGroup: "Group A",
-                ),
-                const SizedBox(height: 15),
-                _buildUserCard(
-                  name: "Mahamed Noor",
-                  username: "RayanAhmed . student",
-                  role: "Supervisor",
-                  isAssigned: false,
-                ),
-              ],
-            ),
+            child: Obx(() {
+              if (controller.isLoading.value) {
+                return const Center(child: CircularProgressIndicator(color: Color(0xFF4A6D3F)));
+              }
+              
+              if (controller.supervisors.isEmpty) {
+                return const Center(child: Text("No supervisors found."));
+              }
+
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 20),
+                itemCount: controller.supervisors.length,
+                itemBuilder: (context, index) {
+                  final supervisor = controller.supervisors[index];
+                  final String name = supervisor['name'] ?? 'Unknown';
+                  final String email = supervisor['email'] ?? 'No Email';
+                  final String role = supervisor['role'] ?? 'Supervisor';
+                  final String? group = supervisor['group']; // The assigned group name (e.g. "Group A")
+                  final bool isAssigned = group != null && group.isNotEmpty;
+
+                  return _buildUserCard(
+                    context: context,
+                    userId: supervisor['_id'],
+                    name: name,
+                    username: email, 
+                    role: role,
+                    isAssigned: isAssigned,
+                    assignedGroup: group,
+                    imgUrl: supervisor['profileImage'],
+                  );
+                },
+              );
+            }),
           ),
         ],
       ),
     );
   }
 
-  // Reuse the _buildUserCard helper from previous code...
   Widget _buildUserCard({
+    required BuildContext context,
+    required String userId,
     required String name,
     required String username,
     required String role,
     required bool isAssigned,
     String? assignedGroup,
+    String? imgUrl,
   }) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 15),
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: const Color(0xFFF8FAF7),
@@ -79,9 +89,14 @@ class SupervisorManagementPage extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const CircleAvatar(
-                backgroundColor: Color(0xFFD1DBCE),
-                child: Icon(Icons.person, color: Colors.grey),
+              CircleAvatar(
+                backgroundColor: const Color(0xFFD1DBCE),
+                backgroundImage: (imgUrl != null && imgUrl.isNotEmpty)
+                    ? NetworkImage("${AppConfig.imageBaseUrl}$imgUrl")
+                    : null,
+                child: (imgUrl == null || imgUrl.isEmpty)
+                    ? const Icon(Icons.person, color: Colors.grey)
+                    : null,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -113,7 +128,7 @@ class SupervisorManagementPage extends StatelessWidget {
                   backgroundColor: const Color(0xFF4A6D3F),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
-                onPressed: () {},
+                onPressed: () => _showAssignGroupDialog(context, userId),
                 child: const Text("Assign Group", style: TextStyle(color: Colors.white)),
               ),
             )
@@ -122,10 +137,51 @@ class SupervisorManagementPage extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(10)),
-              child: Text("Assigned Group: $assignedGroup", style: const TextStyle(fontWeight: FontWeight.bold)),
+              child: Row(
+                children: [
+                   const Text("Assigned Group: ", style: TextStyle(fontWeight: FontWeight.bold)),
+                   Text(assignedGroup ?? "", style: const TextStyle(fontWeight: FontWeight.normal)),
+                   const Spacer(),
+                   // Optional: Allow re-assigning
+                   IconButton(
+                     icon: const Icon(Icons.edit, size: 16, color: Colors.grey),
+                     onPressed: () => _showAssignGroupDialog(context, userId),
+                   )
+                ],
+              ),
             ),
         ],
       ),
+    );
+  }
+
+  void _showAssignGroupDialog(BuildContext context, String userId) {
+    if (controller.groups.isEmpty) {
+      Get.snackbar("Notice", "No groups available to assign.");
+      return;
+    }
+
+    Get.defaultDialog(
+      title: "Select Group",
+      content: SizedBox(
+        height: 300,
+        width: 300,
+        child: ListView.builder(
+          itemCount: controller.groups.length,
+          itemBuilder: (context, index) {
+            final group = controller.groups[index];
+            final groupName = group['name'];
+            return ListTile(
+              title: Text(groupName),
+              onTap: () {
+                Get.back(); // Close dialog
+                controller.assignSupervisor(userId, groupName);
+              },
+            );
+          },
+        ),
+      ),
+      textCancel: "Cancel",
     );
   }
 }

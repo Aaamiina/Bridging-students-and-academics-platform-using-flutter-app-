@@ -1,25 +1,56 @@
 const express = require('express');
 const router = express.Router();
-const { 
-    createUser, 
-    getUsers, 
-    updateUser, 
-    deleteUser, 
-    toggleUserStatus 
+const {
+    createUser,
+    getUsers,
+    updateUser,
+    deleteUser,
+    toggleUserStatus
 } = require('../../controllers/adminController/userController');
 const { protect, authorize } = require('../../middleware/authMiddleware');
+
+const multer = require('multer');
+const path = require('path');
+
+// Configure Multer Storage
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, 'uploads/'); // Ensure this directory exists
+    },
+    filename: function (req, file, cb) {
+        cb(null, 'user-' + Date.now() + path.extname(file.originalname));
+    }
+});
+const upload = multer({ storage: storage });
 
 // Apply protection to all routes below
 router.use(protect);
 router.use(authorize('Admin'));
 
+// Debugging Middleware
+const logBefore = (req, res, next) => { console.log('DEBUG: Middleware - Before Multer'); next(); };
+const logAfter = (req, res, next) => { console.log('DEBUG: Middleware - After Multer'); next(); };
+
 // Base path: /api/admin/users
 router.route('/')
     .get(getUsers)    // GET all users
-    .post(createUser); // POST create user
+    .post(
+        logBefore,
+        (req, res, next) => {
+            upload.single('profileImage')(req, res, (err) => {
+                if (err) {
+                    console.error("DEBUG: Multer Error:", err);
+                    return res.status(500).json({ msg: 'File Upload Error', error: err.message });
+                }
+                next();
+            });
+        },
+        logAfter,
+        createUser
+    ); // POST create user
 
 router.route('/:id')
-    .put(updateUser)    // PUT update user details
+    .put(upload.single('profileImage'), updateUser)    // PUT update user details
     .delete(deleteUser); // DELETE user
 
 router.patch('/:id/status', toggleUserStatus); // PATCH toggle status

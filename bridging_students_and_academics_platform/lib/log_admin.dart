@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart'; 
-import 'api/login.dart'; 
+import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
+import 'package:get/get.dart'; 
 
 class logAdmin extends StatefulWidget {
   const logAdmin({super.key});
@@ -12,42 +12,19 @@ class logAdmin extends StatefulWidget {
 class _logAdminState extends State<logAdmin> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  final ApiLogin _apiLogin = ApiLogin(); 
   bool _isLoading = false;
 
-  void _handleLogin() async {
+  void _handleLogin() {
+    print("DEBUG: log_admin.dart - _handleLogin button clicked");
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      print("DEBUG: log_admin.dart - Validation failed: empty fields");
       _showError("Please enter email and password");
       return;
     }
-
-    setState(() => _isLoading = true);
     
-    final result = await _apiLogin.login(
-      _emailController.text.trim(),
-      _passwordController.text.trim(),
-    );
-
-    setState(() => _isLoading = false);
-
-    if (result != null && result['token'] != null) {
-      // 1. Ensure token is a String
-      String rawToken = result['token'].toString();
-      
-      if (result['user']['role'] == 'Admin') {
-        // 2. Save the token
-        SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', rawToken); 
-        
-        // 3. Navigate
-        if (!mounted) return;
-        Navigator.pushReplacementNamed(context, '/admin_dashboard');
-      } else {
-        _showError("Access Denied: You are not an Admin.");
-      }
-    } else {
-      _showError("Invalid Admin Credentials");
-    }
+    final AuthController authController = Get.find<AuthController>();
+    print("DEBUG: log_admin.dart - Dispatching login to AuthController: ${_emailController.text}");
+    authController.login(_emailController.text.trim(), _passwordController.text.trim(), true); 
   }
 
   void _showError(String message) {
@@ -74,7 +51,7 @@ class _logAdminState extends State<logAdmin> {
               const Icon(Icons.school_rounded, size: 100, color: Color(0xFF4A6D3F)),
               const SizedBox(height: 10),
               const Text(
-                "SIGN IN", 
+                "SIGN IN (v3)", 
                 style: TextStyle(
                   fontSize: 24, 
                   fontWeight: FontWeight.bold, 
@@ -105,16 +82,19 @@ class _logAdminState extends State<logAdmin> {
               SizedBox(
                 width: double.infinity,
                 height: 55,
-                child: ElevatedButton(
-                  onPressed: _isLoading ? null : _handleLogin,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF4A6D3F), 
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
-                  ),
-                  child: _isLoading 
-                    ? const CircularProgressIndicator(color: Colors.white) 
-                    : const Text("Login", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
-                ),
+                child: Obx(() {
+                  final authController = Get.find<AuthController>();
+                  return ElevatedButton(
+                    onPressed: authController.isLoading.value ? null : _handleLogin,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4A6D3F), 
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))
+                    ),
+                    child: authController.isLoading.value 
+                      ? const CircularProgressIndicator(color: Colors.white) 
+                      : const Text("Login", style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  );
+                }),
               ),
             ],
           ),

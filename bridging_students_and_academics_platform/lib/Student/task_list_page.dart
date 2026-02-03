@@ -1,15 +1,18 @@
+import 'package:bridging_students_and_academics_platform/controllers/student_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 import 'custom_nav_bar.dart';
 import 'submit_task_page.dart';
 
 class TaskListPage extends StatelessWidget {
-  const TaskListPage({super.key});
+  TaskListPage({super.key});
+
+  final StudentController controller = Get.put(StudentController());
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      // Consistent Rounded App Bar Design
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: AppBar(
@@ -39,19 +42,36 @@ class TaskListPage extends StatelessWidget {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
-        children: [
-          _taskCard(context, "Database Design", "20 Jan 2026", "Pending", Colors.orange, Icons.storage),
-          _taskCard(context, "Flutter UI", "18 Jan 2026", "Submitted", Colors.green, Icons.flutter_dash),
-          _taskCard(context, "System Documentation", "15 Jan 2026", "Late", Colors.red, Icons.description),
-        ],
-      ),
+      body: Obx(() {
+        if (controller.isLoading.value) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (controller.tasks.isEmpty) {
+          return const Center(child: Text("No tasks assigned yet."));
+        }
+        
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+          itemCount: controller.tasks.length,
+          itemBuilder: (context, index) {
+            final task = controller.tasks[index];
+            // Identify fields from backend response
+             // Task model (title, description, deadline, etc.)
+            final String title = task['title'] ?? 'Task';
+            final String deadline = task['deadline'] ?? 'No Deadline';
+            final String taskId = task['_id'] ?? '';
+            // Status isn't clear in backend response yet (Submission check needed), defaults to Pending?
+            // Assuming we just show the task.
+            
+            return _taskCard(context, title, deadline, "Pending", Colors.orange, Icons.storage, taskId);
+          },
+        );
+      }),
       bottomNavigationBar: const CustomNavBar(currentIndex: 1),
     );
   }
 
-  Widget _taskCard(BuildContext context, String title, String date, String status, Color color, IconData icon) {
+  Widget _taskCard(BuildContext context, String title, String date, String status, Color color, IconData icon, String taskId) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -88,7 +108,7 @@ class TaskListPage extends StatelessWidget {
           Navigator.push(
             context,
             MaterialPageRoute(
-              builder: (context) => SubmitTaskPage(taskName: title, dueDate: date),
+              builder: (context) => SubmitTaskPage(taskId: taskId, taskName: title, dueDate: date),
             ),
           );
         },

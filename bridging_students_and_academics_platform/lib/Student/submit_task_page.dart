@@ -1,20 +1,26 @@
+import 'package:bridging_students_and_academics_platform/controllers/student_controller.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
 
 class SubmitTaskPage extends StatelessWidget {
+  final String taskId; // Added taskId to identify what we are submitting to
   final String taskName;
   final String dueDate;
 
-  const SubmitTaskPage({super.key, required this.taskName, required this.dueDate});
+  SubmitTaskPage({super.key, required this.taskId, required this.taskName, required this.dueDate});
+  
+  final StudentController controller = Get.put(StudentController());
+  final TextEditingController descController = TextEditingController();
+  final TextEditingController linkController = TextEditingController();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      // Rounded AppBar with Back Arrow (since this is a sub-page)
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: AppBar(
-          automaticallyImplyLeading: true, // Keep the back arrow for submission
+          automaticallyImplyLeading: true,
           iconTheme: const IconThemeData(color: Colors.white),
           backgroundColor: Colors.transparent,
           elevation: 0,
@@ -44,7 +50,6 @@ class SubmitTaskPage extends StatelessWidget {
       body: Column(
         children: [
           const SizedBox(height: 20),
-          // Deadline Pill
           Center(
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
@@ -74,32 +79,41 @@ class SubmitTaskPage extends StatelessWidget {
               padding: const EdgeInsets.all(25.0),
               child: Column(
                 children: [
-                  _buildInputField("Task Description", maxLines: 4),
+                  _buildInputField("Task Description", controller: descController, maxLines: 4),
                   const SizedBox(height: 20),
-                  _buildInputField("External Link (GitHub/Drive)"),
+                  _buildInputField("External Link (GitHub/Drive)", controller: linkController),
                   const SizedBox(height: 40),
                   
-                  // Action Buttons
+                  // Upload Button (Mock for now, repository just handles link)
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF81C784), // Light Green
+                      backgroundColor: const Color(0xFF81C784), 
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    onPressed: () {}, 
+                    onPressed: () {
+                         Get.snackbar("Info", "File upload requires backend Multipart support. Use External Link for now.", backgroundColor: Colors.blue, colorText: Colors.white);
+                    }, 
                     icon: const Icon(Icons.cloud_upload, color: Colors.white),
                     label: const Text("Upload File", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                   ),
                   const SizedBox(height: 15),
-                  ElevatedButton(
+                  
+                  Obx(() => ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4A6D3F), // Theme Green
+                      backgroundColor: const Color(0xFF4A6D3F), 
                       minimumSize: const Size(double.infinity, 55),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                     ),
-                    onPressed: () => Navigator.pop(context), 
-                    child: const Text("Submit Task", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  ),
+                    onPressed: controller.isLoading.value 
+                        ? null 
+                        : () {
+                            controller.submitTask(taskId, descController.text, linkController.text);
+                          }, 
+                    child: controller.isLoading.value 
+                        ? const CircularProgressIndicator(color: Colors.white)
+                        : const Text("Submit Task", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                  )),
                 ],
               ),
             ),
@@ -109,7 +123,7 @@ class SubmitTaskPage extends StatelessWidget {
     );
   }
 
-  Widget _buildInputField(String hint, {int maxLines = 1}) {
+  Widget _buildInputField(String hint, {required TextEditingController controller, int maxLines = 1}) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -119,6 +133,7 @@ class SubmitTaskPage extends StatelessWidget {
         ],
       ),
       child: TextField(
+        controller: controller,
         maxLines: maxLines,
         decoration: InputDecoration(
           hintText: hint,

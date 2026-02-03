@@ -1,48 +1,58 @@
 const User = require('../../models/User');
 
 // Create New User
-
 exports.createUser = async (req, res) => {
+  console.log("DEBUG: createUser called. Body:", req.body);
+  console.log("DEBUG: createUser called. File:", req.file);
   try {
-    const { name, email, password, role, group, phone } = req.body;
+    const { name, email, password, role, group, phone, studentId } = req.body;
 
     // 1. Check if user already exists
     let user = await User.findOne({ email });
     if (user) return res.status(400).json({ msg: 'User already exists' });
 
+    // Additional check for studentId if role is Student
+    if (role === 'Student' && studentId) {
+      let existingStudent = await User.findOne({ studentId });
+      if (existingStudent) return res.status(400).json({ msg: 'Student ID already exists' });
+    }
+
     // 2. Handle the Image File
-    // If multer worked, the file path will be in req.file.path
     let profileImage = "";
     if (req.file) {
-      // We replace backslashes with forward slashes for URL compatibility
-      profileImage = req.file.path.replace(/\\/g, "/"); 
+      profileImage = req.file.path.replace(/\\/g, "/");
     }
 
     // 3. Create the user
-    user = new User({ 
-      name, 
-      email, 
-      password, 
-      role, 
-      group, 
-      phone, 
-      profileImage // Save the path to the DB
+    user = new User({
+      name,
+      email,
+      password,
+      role,
+      group,
+      phone,
+      studentId, // Save studentId
+      profileImage
     });
 
     await user.save();
 
-    res.status(201).json({ 
-      msg: 'User created successfully', 
+    res.status(201).json({
+      msg: 'User created successfully',
       user: {
         id: user._id,
         name: user.name,
         email: user.email,
+        studentId: user.studentId,
         profileImage: user.profileImage
-      } 
+      }
     });
   } catch (err) {
-    console.error("Error in createUser:", err);
-    res.status(500).send('Server Error');
+    console.error("DEBUG: Error in createUser:", err);
+    if (err.code === 11000) {
+      return res.status(400).json({ msg: 'Duplicate key error', error: err.message });
+    }
+    res.status(500).send('Server Error: ' + err.message);
   }
 };
 
@@ -59,25 +69,31 @@ exports.getUsers = async (req, res) => {
 // Update User Details
 exports.updateUser = async (req, res) => {
   try {
-    const { name, email, role, phone, group, status, password, profileImage } = req.body;
+    const { name, email, role, phone, group, status, password, studentId } = req.body;
 
     let user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ msg: 'User not found' });
 
+    // Handle Image Update
+    if (req.file) {
+      user.profileImage = req.file.path.replace(/\\/g, "/");
+    }
+
     // Update fields if provided
-    user.name = name || user.name;
-    user.email = email || user.email;
-    user.role = role || user.role;
-    user.phone = phone || user.phone;
-    user.group = group || user.group;
-    user.profileImage = profileImage || user.profileImage;
+    if (name !== undefined) user.name = name;
+    if (email !== undefined) user.email = email;
+    if (role !== undefined) user.role = role;
+    if (phone !== undefined) user.phone = phone;
+    if (group !== undefined) user.group = group;
+    if (studentId !== undefined) user.studentId = studentId;
     user.status = status !== undefined ? status : user.status;
 
-    if (password) user.password = password; // Triggers pre-save hashing
+    if (password) user.password = password;
 
     await user.save();
     res.json({ msg: 'User updated successfully', user });
   } catch (err) {
+    console.error("DEBUG: Error in updateUser:", err);
     res.status(500).send('Server Error');
   }
 };
@@ -102,9 +118,15 @@ exports.deleteUser = async (req, res) => {
     const user = await User.findById(req.params.id);
     if (!user) return res.status(404).json({ msg: 'User not found' });
 
+    console.log(`DEBUG: Deleting user ${user.name} (${user.email}) from group: ${user.group || 'None'}`);
+
+    // Delete the user
     await user.deleteOne();
+
+    console.log(`DEBUG: User ${user.name} successfully deleted`);
     res.json({ msg: 'User removed successfully' });
   } catch (err) {
+    console.error('DEBUG: Error deleting user:', err);
     res.status(500).send('Server Error');
   }
 };

@@ -1,13 +1,13 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
-class GroupMembersPage extends StatefulWidget {
-  const GroupMembersPage({super.key});
+class AdminGroupMembersPage extends StatefulWidget {
+  const AdminGroupMembersPage({super.key});
 
   @override
-  State<GroupMembersPage> createState() => _GroupMembersPageState();
+  State<AdminGroupMembersPage> createState() => _AdminGroupMembersPageState();
 }
 
-class _GroupMembersPageState extends State<GroupMembersPage>
+class _AdminGroupMembersPageState extends State<AdminGroupMembersPage>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _fadeAnimation;

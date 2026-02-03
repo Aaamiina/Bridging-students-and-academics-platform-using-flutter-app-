@@ -10,10 +10,11 @@ const UserSchema = new mongoose.Schema({
   profileImage: { type: String, default: "" }, // Added image field
   role: { type: String, enum: ['Admin', 'Supervisor', 'Student'], required: true },
   status: { type: Boolean, default: true },
-  group: { type: String } // Added group field
+  group: { type: String }, // Added group field
+  studentId: { type: String, unique: true, sparse: true } // Added studentId for Student login
 }, { timestamps: true });
 
-UserSchema.pre('save', async function() {
+UserSchema.pre('save', async function () {
   if (!this.isModified('password')) return;
   try {
     const salt = await bcrypt.genSalt(10);
@@ -23,7 +24,7 @@ UserSchema.pre('save', async function() {
   }
 });
 
-UserSchema.methods.comparePassword = async function(candidatePassword) {
+UserSchema.methods.comparePassword = async function (candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
