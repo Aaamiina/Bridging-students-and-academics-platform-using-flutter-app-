@@ -1,4 +1,6 @@
 import 'package:bridging_students_and_academics_platform/core/app_config.dart';
+import 'dart:convert';
+import 'package:http/http.dart' as http; // Fixes the Undefined name 'http' error
 
 class ApiLogin {
   static const String baseUrl = AppConfig.baseUrl;

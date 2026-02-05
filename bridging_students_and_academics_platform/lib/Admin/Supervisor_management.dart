@@ -155,7 +155,9 @@ class SupervisorManagementPage extends StatelessWidget {
     );
   }
 
-  void _showAssignGroupDialog(BuildContext context, String userId) {
+  // ... existing imports ...
+
+  void _showAssignGroupDialog(BuildContext context, String supervisorId) {
     if (controller.groups.isEmpty) {
       Get.snackbar("Notice", "No groups available to assign.");
       return;
@@ -170,12 +172,21 @@ class SupervisorManagementPage extends StatelessWidget {
           itemCount: controller.groups.length,
           itemBuilder: (context, index) {
             final group = controller.groups[index];
-            final groupName = group['name'];
+            final String groupName = group['name'] ?? "Unknown Group";
+            final String groupId = group['_id']; // Get the MongoDB ID
+
             return ListTile(
+              leading: const Icon(Icons.group_work, color: Color(0xFF4A6D3F)),
               title: Text(groupName),
+              subtitle: Text("ID: ...${groupId.substring(groupId.length - 5)}"),
               onTap: () {
                 Get.back(); // Close dialog
-                controller.assignSupervisor(userId, groupName);
+                
+                // CRITICAL FIX: 
+                // Your Controller method is: assignSupervisor(String groupId, String supervisorId)
+                // You were sending: assignSupervisor(supervisorId, groupName)
+                
+                controller.assignSupervisor(groupId, supervisorId);
               },
             );
           },

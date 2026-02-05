@@ -4,10 +4,21 @@ import 'package:get/get.dart';
 import 'custom_nav_bar.dart';
 import 'submit_task_page.dart';
 
-class TaskListPage extends StatelessWidget {
-  TaskListPage({super.key});
+class TaskListPage extends StatefulWidget {
+  const TaskListPage({super.key});
 
+  @override
+  State<TaskListPage> createState() => _TaskListPageState();
+}
+
+class _TaskListPageState extends State<TaskListPage> {
   final StudentController controller = Get.put(StudentController());
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetchTasks();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -58,12 +69,15 @@ class TaskListPage extends StatelessWidget {
             // Identify fields from backend response
              // Task model (title, description, deadline, etc.)
             final String title = task['title'] ?? 'Task';
-            final String deadline = task['deadline'] ?? 'No Deadline';
+            String deadline = task['deadline']?.toString() ?? 'No Deadline';
+            if (deadline.contains('T')) deadline = deadline.split('T')[0];
             final String taskId = task['_id'] ?? '';
-            // Status isn't clear in backend response yet (Submission check needed), defaults to Pending?
-            // Assuming we just show the task.
-            
-            return _taskCard(context, title, deadline, "Pending", Colors.orange, Icons.storage, taskId);
+            final bool submitted = task['submitted'] == true;
+            final String status = submitted ? 'Submitted' : 'Pending';
+            final Color statusColor = submitted ? Colors.green : Colors.orange;
+            final IconData statusIcon = submitted ? Icons.check_circle : Icons.storage;
+
+            return _taskCard(context, title, deadline, status, statusColor, statusIcon, taskId);
           },
         );
       }),

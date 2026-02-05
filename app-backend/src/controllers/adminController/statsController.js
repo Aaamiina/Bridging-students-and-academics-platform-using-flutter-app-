@@ -1,7 +1,7 @@
 const User = require('../../models/User');
 const Group = require('../../models/group');
 const Task = require('../../models/task');
-const Submission = require('../../models/gradesub');
+const Submission = require('../../models/Submission');
 
 exports.getGlobalStats = async (req, res) => {
     try {

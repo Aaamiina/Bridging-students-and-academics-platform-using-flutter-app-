@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:bridging_students_and_academics_platform/Supervisor/custom/custom_bottom_bar.dart';
 import 'package:get/get.dart';
-
+import 'package:get_storage/get_storage.dart';
+import 'package:bridging_students_and_academics_platform/controllers/supervisor_controller.dart';
+import 'package:bridging_students_and_academics_platform/data/repositories/auth_repository.dart';
 
 class ProfilePageSup extends StatefulWidget {
   const ProfilePageSup({super.key});
@@ -11,12 +13,28 @@ class ProfilePageSup extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePageSup> {
-  final int _selectedIndex = 3; // Highlight 'Profile' tab
+  final SupervisorController controller = Get.isRegistered<SupervisorController>()
+      ? Get.find<SupervisorController>()
+      : Get.put(SupervisorController());
+  final GetStorage _storage = GetStorage();
+  final int _selectedIndex = 3;
 
-  // Controllers for the profile fields
-  final TextEditingController _nameController = TextEditingController(text: "Asma Umar Abdi");
-  final TextEditingController _emailController = TextEditingController(text: "asma@example.com");
-  final TextEditingController _phoneController = TextEditingController(text: "+252 612345678");
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.loadUserData();
+    final user = _storage.read<Map>('user');
+    final phone = user?['phone']?.toString();
+    final name = controller.userName.value.isNotEmpty ? controller.userName.value : _storage.read('user_name') ?? '';
+    final email = controller.userEmail.value.isNotEmpty ? controller.userEmail.value : _storage.read('user_email') ?? '';
+    _nameController = TextEditingController(text: name);
+    _emailController = TextEditingController(text: email);
+    _phoneController = TextEditingController(text: phone ?? 'Not Set');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,14 +43,7 @@ class _ProfilePageState extends State<ProfilePageSup> {
       appBar: AppBar(
         backgroundColor: const Color(0xFF4A6D3F),
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          "Profile", // Note: Your Frame 46 says "Submissions" in the header, likely a placeholder. I used "Profile" for clarity.
-          style: TextStyle(color: Colors.white, fontSize: 18),
-        ),
+        title: const Text("My Profile", style: TextStyle(color: Colors.white, fontSize: 18)),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -40,29 +51,21 @@ class _ProfilePageState extends State<ProfilePageSup> {
           children: [
             const SizedBox(height: 30),
             
-            // Profile Image Section with Edit Icon
+            // Profile Image Section
             Center(
               child: Stack(
                 children: [
                   Container(
-                    width: 120,
-                    height: 120,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFFB7CFB1),
-                      shape: BoxShape.circle,
-                    ),
+                    width: 120, height: 120,
+                    decoration: const BoxDecoration(color: Color(0xFFB7CFB1), shape: BoxShape.circle),
                     child: const Icon(Icons.person, size: 60, color: Colors.black54),
                   ),
                   Positioned(
-                    bottom: 0,
-                    right: 0,
+                    bottom: 0, right: 0,
                     child: Container(
                       padding: const EdgeInsets.all(4),
-                      decoration: const BoxDecoration(
-                        color: Color(0xFF4A6D3F),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(Icons.edit, color: Colors.white, size: 20),
+                      decoration: const BoxDecoration(color: Color(0xFF4A6D3F), shape: BoxShape.circle),
+                      child: const Icon(Icons.camera_alt, color: Colors.white, size: 20),
                     ),
                   ),
                 ],
@@ -79,13 +82,7 @@ class _ProfilePageState extends State<ProfilePageSup> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.03),
-                      blurRadius: 10,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
+                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5))],
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -94,11 +91,11 @@ class _ProfilePageState extends State<ProfilePageSup> {
                     _buildProfileTextField(_nameController),
                     const SizedBox(height: 20),
                     
-                    _buildLabel("Email"),
-                    _buildProfileTextField(_emailController),
+                    _buildLabel("Email Address"),
+                    _buildProfileTextField(_emailController, isEnabled: false), // Usually email is read-only
                     const SizedBox(height: 20),
                     
-                    _buildLabel("Phone"),
+                    _buildLabel("Phone Number"),
                     _buildProfileTextField(_phoneController),
                   ],
                 ),
@@ -113,32 +110,26 @@ class _ProfilePageState extends State<ProfilePageSup> {
               child: Column(
                 children: [
                   SizedBox(
-                    width: double.infinity,
-                    height: 55,
+                    width: double.infinity, height: 55,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF4A6D3F),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () {
-                        // Logic to save profile
-                      },
-                      child: const Text("Save Profile", style: TextStyle(color: Colors.white, fontSize: 16)),
+                      onPressed: _updateProfile,
+                      child: const Text("Update Profile", style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                   ),
                   const SizedBox(height: 15),
                   SizedBox(
-                    width: double.infinity,
-                    height: 55,
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFFD32F2F), // Red for Logout
+                    width: double.infinity, height: 55,
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFD32F2F)),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: () {
-                        // Logic to logout
-                      },
-                      child: const Text("Logout", style: TextStyle(color: Colors.white, fontSize: 16)),
+                      onPressed: () => _showLogoutDialog(),
+                      child: const Text("Logout", style: TextStyle(color: Color(0xFFD32F2F), fontSize: 16)),
                     ),
                   ),
                 ],
@@ -157,31 +148,71 @@ class _ProfilePageState extends State<ProfilePageSup> {
             case 1: Get.offAllNamed('/supervisor_tasks'); break;
             case 2: Get.offAllNamed('/supervisor_submissions'); break;
             case 3: Get.offAllNamed('/supervisor_profile'); break;
-            default: Get.offAllNamed('/supervisor_dashboard');
           }
         },
       ),
     );
   }
 
+  Future<void> _updateProfile() async {
+    final token = _storage.read<String>('token');
+    if (token == null || token.isEmpty) {
+      Get.snackbar("Error", "Not logged in", backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+    controller.isLoading.value = true;
+    final updated = await AuthRepository().updateProfile(
+      token,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim() == 'Not Set' ? '' : _phoneController.text.trim(),
+    );
+    controller.isLoading.value = false;
+    if (updated != null) {
+      final user = _storage.read<Map>('user') ?? {};
+      user['name'] = updated['name'];
+      user['email'] = updated['email'];
+      if (updated['phone'] != null) user['phone'] = updated['phone'];
+      _storage.write('user', user);
+      controller.userName.value = updated['name']?.toString() ?? '';
+      if (updated['phone'] != null) _phoneController.text = updated['phone'].toString();
+      Get.snackbar("Success", "Profile updated", backgroundColor: const Color(0xFF4CAF50), colorText: Colors.white);
+    } else {
+      Get.snackbar("Error", "Failed to update profile", backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
+
+  void _showLogoutDialog() {
+    Get.defaultDialog(
+      title: "Logout",
+      middleText: "Are you sure you want to exit?",
+      textCancel: "Cancel",
+      textConfirm: "Logout",
+      confirmTextColor: Colors.white,
+      buttonColor: const Color(0xFFD32F2F),
+      onConfirm: () => controller.logout(),
+    );
+  }
+
   Widget _buildLabel(String text) => Padding(
     padding: const EdgeInsets.only(bottom: 8),
-    child: Text(
-      text, 
-      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)
-    ),
+    child: Text(text, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF4A6D3F))),
   );
 
-  Widget _buildProfileTextField(TextEditingController controller) {
+  Widget _buildProfileTextField(TextEditingController controller, {bool isEnabled = true}) {
     return TextField(
       controller: controller,
+      enabled: isEnabled,
       decoration: InputDecoration(
         filled: true,
-        fillColor: Colors.white,
+        fillColor: isEnabled ? Colors.white : const Color(0xFFF5F5F5),
         contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        disabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFF0F0F0)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

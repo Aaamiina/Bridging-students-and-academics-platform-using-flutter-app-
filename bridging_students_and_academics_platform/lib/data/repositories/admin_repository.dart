@@ -189,6 +189,7 @@
 import 'dart:convert';
 import 'package:get_storage/get_storage.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart'; 
 import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 
 class AdminRepository {

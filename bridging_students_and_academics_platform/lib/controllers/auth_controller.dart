@@ -67,13 +67,15 @@ class AuthController extends GetxController {
         await _storage.write('user_name', loggedInUser.name);
         await _storage.write('user_email', loggedInUser.email);
         await _storage.write('user_image', loggedInUser.profileImage);
-        
+        await _storage.write('user_group', loggedInUser.group ?? '');
+
         user.value = loggedInUser;
         Get.snackbar('Success', 'Login successful', backgroundColor: Colors.green, colorText: Colors.white);
         _navigateBasedOnRole(loggedInUser.role);
       } else {
         print("DEBUG: Login Failed: ${result['message']}");
-        Get.snackbar('Error', result['message'], backgroundColor: Colors.red, colorText: Colors.white);
+        final msg = result['message']?.toString() ?? 'Login failed';
+        Get.snackbar('Login Failed', msg, backgroundColor: Colors.red, colorText: Colors.white, duration: const Duration(seconds: 4));
       }
     } catch (e, stack) {
       print("DEBUG: AuthController.login CRASH: $e");

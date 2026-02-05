@@ -71,10 +71,10 @@ class LoginPage extends StatelessWidget {
                         ),
                         const SizedBox(height: 25),
 
-                        Obx(() => _label(isSupervisor.value ? "Academic Email" : "University ID")),
+                        Obx(() => _label(isSupervisor.value ? "Academic Email" : "University ID or Email")),
                         Obx(() => _shadowInput(
                           controller: emailController, 
-                          hintText: isSupervisor.value ? "supervisor@example.com" : "Registration ID"
+                          hintText: isSupervisor.value ? "supervisor@example.com" : "ID or email"
                         )),
 
                         _label("Password"),

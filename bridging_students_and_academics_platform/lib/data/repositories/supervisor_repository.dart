@@ -10,6 +10,13 @@ class SupervisorRepository {
   // Helper to get the token; returns null if not found to handle auth errors better
   String? get _token => _storage.read('token');
 
+  Map<String, String> _getHeaders() {
+    return {
+      "Authorization": "Bearer ${_token ?? ''}",
+      "Content-Type": "application/json",
+    };
+  }
+
   Future<List<dynamic>> getMyGroups() async {
     try {
       final token = _token;
@@ -38,26 +45,44 @@ class SupervisorRepository {
     }
   }
 
-  Future<bool> createTask({
+
+
+  // Future additions: 
+Future<List<dynamic>> getTasks() async {
+    try {
+      if (_token == null) return [];
+
+      final response = await http.get(
+        Uri.parse('$baseUrl/supervisor/tasks'),
+        headers: _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body);
+      }
+      return [];
+    } catch (e) {
+      print("Error fetching tasks: $e");
+      return [];
+    }
+  }
+
+Future<bool> createTask({
     required String title,
     required String description,
     required String groupId,
     required String deadline,
   }) async {
     try {
-      final token = _token;
-      if (token == null) return false;
+      if (_token == null) return false;
 
       final response = await http.post(
         Uri.parse('$baseUrl/supervisor/tasks'),
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer $token"
-        },
+        headers: _getHeaders(),
         body: jsonEncode({
           "title": title,
           "description": description,
-          "group_id": groupId, // Changed to snake_case to match common backend standards
+          "group_id": groupId, // Matches your fixed backend controller
           "deadline": deadline
         }),
       );
@@ -69,6 +94,99 @@ class SupervisorRepository {
     }
   }
 
-  // Future additions: 
-  // Future<List<dynamic>> getSubmissions(String groupId) async { ... }
+  Future<bool> updateTask(String taskId, Map<String, dynamic> data) async {
+    try {
+      if (_token == null) return false;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/supervisor/tasks/$taskId'),
+        headers: _getHeaders(),
+        body: jsonEncode(data),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error updating task: $e");
+      return false;
+    }
+  }
+
+  Future<bool> deleteTask(String taskId) async {
+    try {
+      if (_token == null) return false;
+
+      final response = await http.delete(
+        Uri.parse('$baseUrl/supervisor/tasks/$taskId'),
+        headers: _getHeaders(),
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error deleting task: $e");
+      return false;
+    }
+  }
+
+  // --- SUBMISSIONS ---
+
+  Future<List<dynamic>> getSubmissionsByTask(String taskId) async {
+    try {
+      if (_token == null) return [];
+      final response = await http.get(
+        Uri.parse('$baseUrl/supervisor/submissions/$taskId'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return [];
+    } catch (e) {
+      print("Error getSubmissionsByTask: $e");
+      return [];
+    }
+  }
+
+  Future<List<dynamic>> getAllSubmissions() async {
+    try {
+      if (_token == null) return [];
+      final response = await http.get(
+        Uri.parse('$baseUrl/supervisor/submissions'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return [];
+    } catch (e) {
+      print("Error getAllSubmissions: $e");
+      return [];
+    }
+  }
+
+  Future<bool> gradeSubmission(String submissionId, int? marks, String feedback) async {
+    try {
+      if (_token == null) return false;
+      final response = await http.put(
+        Uri.parse('$baseUrl/supervisor/grade/$submissionId'),
+        headers: _getHeaders(),
+        body: jsonEncode({"marks": marks, "feedback": feedback}),
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("Error gradeSubmission: $e");
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> getGroupMembers(String groupName) async {
+    try {
+      if (_token == null) return [];
+      final encoded = Uri.encodeComponent(groupName);
+      final response = await http.get(
+        Uri.parse('$baseUrl/supervisor/groups/$encoded/members'),
+        headers: _getHeaders(),
+      );
+      if (response.statusCode == 200) return jsonDecode(response.body);
+      return [];
+    } catch (e) {
+      print("Error getGroupMembers: $e");
+      return [];
+    }
+  }
 }

@@ -1,18 +1,76 @@
+import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
+import 'package:bridging_students_and_academics_platform/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'custom_nav_bar.dart';
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
+
+  @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final GetStorage _storage = GetStorage();
+  final AuthController authController = Get.find<AuthController>();
+  late TextEditingController _nameController;
+  late TextEditingController _emailController;
+  late TextEditingController _phoneController;
+  var _isUpdating = false.obs;
+
+  @override
+  void initState() {
+    super.initState();
+    final name = _storage.read('user_name') ?? 'Student';
+    final email = _storage.read('user_email') ?? '';
+    final user = _storage.read<Map>('user');
+    final phone = user?['phone']?.toString() ?? _storage.read('user_phone') ?? 'Not Set';
+    _nameController = TextEditingController(text: name);
+    _emailController = TextEditingController(text: email);
+    _phoneController = TextEditingController(text: phone == 'Not Set' ? '' : phone);
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _updateProfile() async {
+    final token = _storage.read<String>('token');
+    if (token == null || token.isEmpty) {
+      Get.snackbar("Error", "Not logged in", backgroundColor: Colors.red, colorText: Colors.white);
+      return;
+    }
+    _isUpdating.value = true;
+    final updated = await AuthRepository().updateProfile(
+      token,
+      name: _nameController.text.trim(),
+      phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+    );
+    _isUpdating.value = false;
+    if (updated != null) {
+      _storage.write('user_name', updated['name']);
+      _storage.write('user_email', updated['email']);
+      if (updated['phone'] != null) _storage.write('user_phone', updated['phone']);
+      Get.snackbar("Success", "Profile updated", backgroundColor: const Color(0xFF4CAF50), colorText: Colors.white);
+    } else {
+      Get.snackbar("Error", "Failed to update profile", backgroundColor: Colors.red, colorText: Colors.white);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F5F5),
-      // Consistent Rounded App Bar Design
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(80),
         child: AppBar(
-          automaticallyImplyLeading: false, // Removes the back arrow
+          automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
           flexibleSpace: Container(
@@ -42,7 +100,6 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
         child: Column(
           children: [
-            // Profile Image Section
             Center(
               child: Stack(
                 children: [
@@ -51,7 +108,7 @@ class ProfilePage extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: Colors.white, width: 4),
                       boxShadow: [
-                        BoxShadow(color: Colors.black12, blurRadius: 10, offset: Offset(0, 5))
+                        BoxShadow(color: Colors.black12, blurRadius: 10, offset: const Offset(0, 5)),
                       ],
                     ),
                     child: const CircleAvatar(
@@ -73,25 +130,22 @@ class ProfilePage extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 30),
-            
-            // Profile Information Fields
-            _profileField("Full Name", "Amira Omar Abdi"),
-            _profileField("Email", "amira@example.com"),
-            _profileField("Phone", "+252 61XXXXXXX"),
-            
+            _profileField("Full Name", _nameController),
+            _profileField("Email", _emailController, readOnly: true),
+            _profileField("Phone", _phoneController),
             const SizedBox(height: 40),
-            
-            // Action Buttons
-            ElevatedButton(
+            Obx(() => ElevatedButton(
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF4A6D3F),
                 minimumSize: const Size(double.infinity, 55),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 elevation: 2,
               ),
-              onPressed: () {}, 
-              child: const Text("Edit Profile", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            ),
+              onPressed: _isUpdating.value ? null : _updateProfile,
+              child: _isUpdating.value
+                  ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text("Edit Profile", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+            )),
             const SizedBox(height: 15),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -103,7 +157,7 @@ class ProfilePage extends StatelessWidget {
                 ),
                 elevation: 0,
               ),
-              onPressed: () => Navigator.pop(context), 
+              onPressed: () => authController.logout(),
               child: const Text("Logout", style: TextStyle(color: Colors.red, fontSize: 16, fontWeight: FontWeight.bold)),
             ),
             const SizedBox(height: 20),
@@ -114,7 +168,7 @@ class ProfilePage extends StatelessWidget {
     );
   }
 
-  Widget _profileField(String label, String value) {
+  Widget _profileField(String label, TextEditingController controller, {bool readOnly = false}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -124,17 +178,19 @@ class ProfilePage extends StatelessWidget {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
           ),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 4))
-              ],
+          TextField(
+            controller: controller,
+            readOnly: readOnly,
+            decoration: InputDecoration(
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              border: OutlineInputBorder(borderRadius: BorderRadius.circular(15)),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide(color: Colors.grey.shade300),
+              ),
             ),
-            child: Text(value, style: const TextStyle(fontSize: 16, color: Colors.black87)),
           ),
         ],
       ),

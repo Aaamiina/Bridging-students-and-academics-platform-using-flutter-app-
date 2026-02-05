@@ -84,6 +84,7 @@
 
 const Group = require('../../models/group');
 const User = require('../../models/User');
+const mongoose =require("mongoose");
 
 // Create Group (Updated to accept optional supervisorId at creation)
 exports.createGroup = async (req, res) => {
@@ -109,32 +110,52 @@ exports.createGroup = async (req, res) => {
     }
 };
 
-/**
- * NEW: Assign to Supervisor
- * Use this in your "Assign Supervisor" section in the Admin Panel
- */
+//   NEW: Assign to Supervisor
+
 exports.assignSupervisor = async (req, res) => {
+    console.log("DEBUG: assignSupervisor hit with body:", req.body);
     try {
         const { groupId, supervisorId } = req.body;
 
-        // 1. Verify the group exists
-        const group = await Group.findById(groupId);
-        if (!group) return res.status(404).json({ msg: 'Group not found' });
-
-        // 2. Verify the supervisor exists and has the correct role
-        const supervisor = await User.findOne({ _id: supervisorId, role: 'Supervisor' });
-        if (!supervisor) {
-            return res.status(404).json({ msg: 'Supervisor not found or invalid role' });
+        // 1. Validate ObjectId format to prevent cast errors
+        if (!mongoose.Types.ObjectId.isValid(groupId) || !mongoose.Types.ObjectId.isValid(supervisorId)) {
+            console.log("DEBUG: Invalid ID format received");
+            return res.status(400).json({ 
+                msg: 'Invalid Group ID or Supervisor ID format. Ensure you are sending 24-character hex IDs.' 
+            });
         }
 
-        // 3. Update the group's supervisorId field
+        // 2. Verify the group exists
+        const group = await Group.findById(groupId);
+        if (!group) {
+            console.log("DEBUG: Group not found for ID:", groupId);
+            return res.status(404).json({ msg: 'Group not found in database' });
+        }
+
+        // 3. Verify the supervisor exists and has the correct role
+        const supervisor = await User.findOne({ _id: supervisorId, role: 'Supervisor' });
+        if (!supervisor) {
+            console.log("DEBUG: Supervisor not found or wrong role for ID:", supervisorId);
+            return res.status(404).json({ msg: 'Supervisor not found or user is not a Supervisor' });
+        }
+
+        // 4. Update and Save
         group.supervisorId = supervisorId;
         await group.save();
 
-        res.json({ msg: 'Supervisor assigned to group successfully', group });
+        // 5. Optionally update the User record if you track the group there too
+        // await User.findByIdAndUpdate(supervisorId, { group: group.name });
+
+        console.log("DEBUG: Assignment successful!");
+        res.json({ 
+            msg: 'Supervisor assigned to group successfully', 
+            groupName: group.name,
+            supervisorName: supervisor.name 
+        });
+
     } catch (err) {
-        console.error(err);
-        res.status(500).send('Server Error');
+        console.error("DEBUG: Catch block error:", err);
+        res.status(500).json({ msg: 'Server Error', error: err.message });
     }
 };
 

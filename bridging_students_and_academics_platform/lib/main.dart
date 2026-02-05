@@ -1,6 +1,7 @@
 import 'package:bridging_students_and_academics_platform/Admin/admin_group_members_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_dashboard.dart';
 import 'package:bridging_students_and_academics_platform/Login.dart';
+import 'package:bridging_students_and_academics_platform/Supervisor/group/group_members_page.dart';
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:bridging_students_and_academics_platform/getStarted.dart';
@@ -54,6 +55,11 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/supervisor_submissions', page: () => const SubmissionPage()),
         GetPage(name: '/supervisor_profile', page: () => const ProfilePageSup()),
         GetPage(name: '/admin_login', page: () => const logAdmin()),
+        // main.dart - Add this to your getPages list
+ GetPage(
+  name: '/supervisor_group_members', 
+  page: () => SupervisorGroupMembersPage(groupName: Get.arguments ?? 'Group'),
+),
       ],
     );
   }

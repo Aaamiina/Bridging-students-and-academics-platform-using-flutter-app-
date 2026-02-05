@@ -59,4 +59,30 @@ class AuthRepository {
       };
     }
   }
+
+  Future<Map<String, dynamic>?> updateProfile(String token, {String? name, String? email, String? password, String? phone}) async {
+    try {
+      final body = <String, dynamic>{};
+      if (name != null) body['name'] = name;
+      if (email != null) body['email'] = email;
+      if (password != null && password.isNotEmpty) body['password'] = password;
+      if (phone != null) body['phone'] = phone;
+
+      final response = await http.put(
+        Uri.parse('$baseUrl/auth/profile'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+        body: jsonEncode(body),
+      ).timeout(const Duration(seconds: 10));
+
+      if (response.statusCode == 200) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }

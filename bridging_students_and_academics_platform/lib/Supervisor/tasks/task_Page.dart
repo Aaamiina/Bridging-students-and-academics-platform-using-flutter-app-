@@ -1,7 +1,8 @@
-import 'package:bridging_students_and_academics_platform/Supervisor/custom/custom_bottom_bar.dart';
-import 'package:bridging_students_and_academics_platform/controllers/supervisor_controller.dart';
+import 'package:bridging_students_and_academics_platform/Supervisor/tasks/task-details-page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:bridging_students_and_academics_platform/controllers/supervisor_controller.dart';
+import 'package:bridging_students_and_academics_platform/Supervisor/custom/custom_bottom_bar.dart';
 
 class TaskPage extends StatefulWidget {
   const TaskPage({super.key});
@@ -11,34 +12,32 @@ class TaskPage extends StatefulWidget {
 }
 
 class _TaskPageState extends State<TaskPage> {
-  final SupervisorController controller = Get.find<SupervisorController>();
-  // If Controller not found (if coming directly), put it.
-  // Actually better use Get.put if unsure, or GetView structure.
-  // Assuming it was put in main or previous page. To be safe:
-  // final SupervisorController controller = Get.put(SupervisorController()); 
-  // But we have it in groups page.
+  final SupervisorController controller = Get.isRegistered<SupervisorController>()
+      ? Get.find<SupervisorController>()
+      : Get.put(SupervisorController());
 
   String? selectedGroupId;
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descController = TextEditingController();
   final TextEditingController deadlineController = TextEditingController();
 
-  int _selectedIndex = 1;
+  final int _selectedIndex = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    controller.fetchTasks();
+  }
 
   @override
   Widget build(BuildContext context) {
-    // Ensure controller is available
-    if (!Get.isRegistered<SupervisorController>()) {
-      Get.put(SupervisorController());
-    }
-
     return Scaffold(
       backgroundColor: const Color(0xFFF1F4F0),
       body: Stack(
         children: [
-          // Background blobs
-           Positioned(top: -50, right: -5, child: _blob(110, 200, Colors.green.withOpacity(0.3))),
-           Positioned(top: -20, right: -20, child: _blob(110, 110, const Color(0xFF4A6D3F))),
+          // Background UI Elements
+          Positioned(top: -50, right: -5, child: _blob(110, 200, Colors.green.withOpacity(0.3))),
+          Positioned(top: -20, right: -20, child: _blob(110, 110, const Color(0xFF4A6D3F))),
 
           SafeArea(
             child: Column(
@@ -51,31 +50,53 @@ class _TaskPageState extends State<TaskPage> {
                       children: [
                         const SizedBox(height: 10),
                         const Center(
-                          child: Text(
-                            "Create Task",
-                            style: TextStyle(
-                              fontSize: 22,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF4A6D3F),
-                            ),
-                          ),
+                          child: Text("Manage Tasks",
+                              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Color(0xFF4A6D3F))),
                         ),
                         const SizedBox(height: 20),
                         
                         _buildTaskForm(),
 
                         const SizedBox(height: 25),
-                        
-                        const Text(
-                          "Created Tasks",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A6D3F)),
-                        ),
+                        const Text("Active Tasks",
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A6D3F))),
                         const SizedBox(height: 10),
 
-                        // Placeholder for tasks list (user asked to connect Backend, we added createTask, 
-                        // listing created tasks isn't explicit in backend controller yet, only getSubmissions.
-                        // We will skip listing created tasks dynamically for now or mock it.)
-                        const Text("Newly created tasks will appear for students immediately."),
+                        // List of Created Tasks
+                        Obx(() {
+                          if (controller.isLoading.value && controller.tasks.isEmpty) {
+                            return const Center(child: CircularProgressIndicator());
+                          }
+                          if (controller.tasks.isEmpty) {
+                            return const Center(
+                              child: Padding(
+                                padding: EdgeInsets.all(20.0),
+                                child: Text("No tasks found. Create one above!", style: TextStyle(color: Colors.grey)),
+                              ),
+                            );
+                          }
+                          return ListView.builder(
+                            shrinkWrap: true,
+                            physics: const NeverScrollableScrollPhysics(),
+                            itemCount: controller.tasks.length,
+                            itemBuilder: (context, index) {
+                              final task = controller.tasks[index];
+                              return Card(
+                                elevation: 2,
+                                margin: const EdgeInsets.only(bottom: 12),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                                child: ListTile(
+                                  contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 5),
+                                  title: Text(task['title'] ?? 'Untitled', 
+                                      style: const TextStyle(fontWeight: FontWeight.bold)),
+                                  subtitle: Text("Group: ${task['groupId']?['name'] ?? 'N/A'}\nDue: ${task['deadline'].toString().split('T')[0]}"),
+                                  trailing: const Icon(Icons.edit_note, color: Color(0xFF4A6D3F)),
+                                  onTap: () => Get.to(() => TaskDetailsPage(taskData: task)),
+                                ),
+                              );
+                            },
+                          );
+                        }),
                       ],
                     ),
                   ),
@@ -89,23 +110,19 @@ class _TaskPageState extends State<TaskPage> {
         currentIndex: _selectedIndex,
         onTap: (index) {
           if (index == _selectedIndex) return;
-          switch (index) {
-            case 0: Get.offAllNamed('/supervisor_dashboard'); break;
-            case 1: Get.offAllNamed('/supervisor_tasks'); break;
-            case 2: Get.offAllNamed('/supervisor_submissions'); break;
-            case 3: Get.offAllNamed('/supervisor_profile'); break;
-            default: Get.offAllNamed('/supervisor_dashboard');
-          }
+          _navigate(index);
         },
       ),
     );
   }
 
-  Widget _blob(double w, double h, Color color) {
-    return Container(
-      width: w, height: h,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
+  void _navigate(int index) {
+    switch (index) {
+      case 0: Get.offAllNamed('/supervisor_dashboard'); break;
+      case 1: Get.offAllNamed('/supervisor_tasks'); break;
+      case 2: Get.offAllNamed('/supervisor_submissions'); break;
+      case 3: Get.offAllNamed('/supervisor_profile'); break;
+    }
   }
 
   Widget _buildTaskForm() {
@@ -114,30 +131,23 @@ class _TaskPageState extends State<TaskPage> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [
-           BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5)),
-        ],
+        boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 10, offset: const Offset(0, 5))],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildLabel("Task Title"),
-          _buildTextField("", controller: titleController),
+          _buildTextField("Enter title", controller: titleController),
           const SizedBox(height: 15),
-          
           _buildLabel("Description"),
-          _buildTextField("", controller: descController, maxLines: 4),
+          _buildTextField("Enter details...", controller: descController, maxLines: 3),
           const SizedBox(height: 15),
-          
-          _buildLabel("Group"),
+          _buildLabel("Assign to Group"),
           _buildDropdown(),
           const SizedBox(height: 15),
-          
           _buildLabel("Deadline"),
-          _buildTextField("YYYY-MM-DD", controller: deadlineController), 
-          // Ideally use DatePicker, keeping text for simplicity as per existing design
+          _buildTextField("YYYY-MM-DD", controller: deadlineController),
           const SizedBox(height: 20),
-          
           SizedBox(
             width: double.infinity,
             child: Obx(() => ElevatedButton(
@@ -146,27 +156,10 @@ class _TaskPageState extends State<TaskPage> {
                 padding: const EdgeInsets.symmetric(vertical: 15),
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
               ),
-              onPressed: controller.isLoading.value 
-                  ? null
-                  : () {
-                      if (selectedGroupId != null && titleController.text.isNotEmpty) {
-                        controller.createTask(
-                          titleController.text, 
-                          descController.text, 
-                          selectedGroupId!, 
-                          deadlineController.text
-                        );
-                        // Clear form
-                        titleController.clear();
-                        descController.clear();
-                        deadlineController.clear();
-                      } else {
-                        Get.snackbar("Error", "Please fill all fields and select a group", backgroundColor: Colors.orange, colorText: Colors.white);
-                      }
-                  },
+              onPressed: controller.isLoading.value ? null : _submitForm,
               child: controller.isLoading.value 
-                  ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white))
-                  : const Text("Create Task", style: TextStyle(color: Colors.white)),
+                ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                : const Text("Create Task", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
             )),
           ),
         ],
@@ -174,11 +167,27 @@ class _TaskPageState extends State<TaskPage> {
     );
   }
 
-  Widget _buildLabel(String text) => Padding(
-    padding: const EdgeInsets.only(bottom: 5),
-    child: Text(text,
-        style: const TextStyle(fontSize: 12, color: Color(0xFF4A6D3F), fontWeight: FontWeight.w600)),
-  );
+  void _submitForm() async {
+    if (selectedGroupId != null && titleController.text.isNotEmpty && deadlineController.text.isNotEmpty) {
+      await controller.createTask(
+        titleController.text, 
+        descController.text, 
+        selectedGroupId!, 
+        deadlineController.text
+      );
+      // Success Cleanup
+      titleController.clear();
+      descController.clear();
+      deadlineController.clear();
+      setState(() => selectedGroupId = null);
+    } else {
+      Get.snackbar("Missing Info", "Please fill all required fields", backgroundColor: Colors.orange, colorText: Colors.white);
+    }
+  }
+
+  Widget _blob(double w, double h, Color color) => Container(width: w, height: h, decoration: BoxDecoration(color: color, shape: BoxShape.circle));
+
+  Widget _buildLabel(String text) => Padding(padding: const EdgeInsets.only(bottom: 5), child: Text(text, style: const TextStyle(fontSize: 12, color: Color(0xFF4A6D3F), fontWeight: FontWeight.w600)));
 
   Widget _buildTextField(String hint, {int maxLines = 1, required TextEditingController controller}) {
     return TextField(
@@ -186,34 +195,27 @@ class _TaskPageState extends State<TaskPage> {
       maxLines: maxLines,
       decoration: InputDecoration(
         hintText: hint,
-        isDense: true,
-        contentPadding: const EdgeInsets.all(12),
         filled: true,
-        fillColor: Colors.white,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
-        enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: const BorderSide(color: Colors.black12)),
+        fillColor: const Color(0xFFF9F9F9),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(10), borderSide: BorderSide.none),
+        contentPadding: const EdgeInsets.all(12),
       ),
     );
   }
 
   Widget _buildDropdown() {
     return Obx(() {
-       // Populate dropdown from controller.groups
-       if (controller.groups.isEmpty) return const Text("No groups available");
-       
-       return Container(
+      if (controller.groups.isEmpty) return const Text("No groups found. Assign one in Admin panel.");
+      return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10),
-        decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(10)),
+        decoration: BoxDecoration(color: const Color(0xFFF9F9F9), borderRadius: BorderRadius.circular(10)),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<String>(
             value: selectedGroupId,
             hint: const Text("Select Group"),
             isExpanded: true,
             items: controller.groups.map<DropdownMenuItem<String>>((group) {
-              return DropdownMenuItem<String>(
-                value: group['_id'],
-                child: Text(group['name'] ?? 'Unnamed Group'),
-              );
+              return DropdownMenuItem<String>(value: group['_id'], child: Text(group['name'] ?? 'Group'));
             }).toList(),
             onChanged: (val) => setState(() => selectedGroupId = val),
           ),

@@ -1,21 +1,23 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 
-// Login Mechanism
+// Login: uses users from database only (Admin creates Students; no seed data for students)
 exports.login = async (req, res) => {
-  const { email, password, studentId } = req.body; // Accept email OR studentId
+  const { email, password, studentId } = req.body;
 
   try {
     let user;
-    // Check if login is via Student ID (if provided) or Email
-    if (studentId) {
-      user = await User.findOne({ studentId });
+    if (studentId !== undefined && studentId !== null && String(studentId).trim() !== '') {
+      // Student login: find admin-created user (role Student) by Student ID or by email
+      const identifier = String(studentId).trim();
+      user = await User.findOne({ studentId: identifier, role: 'Student' });
+      if (!user) {
+        user = await User.findOne({ email: identifier, role: 'Student' });
+      }
     } else {
       user = await User.findOne({ email });
     }
 
-    // 2. Check if user exists and if their status is true (Active)
-    // Updated from .isActive to .status to match your Model
     if (!user || !user.status) {
       return res.status(401).json({ msg: 'Invalid credentials or account inactive' });
     }
@@ -51,7 +53,7 @@ exports.login = async (req, res) => {
   }
 };
 
-// TEMPORARY: Seed Admin for testing
+// TEMPORARY: Seed Admin for testing (role must be 'Admin' to match User schema enum)
 exports.seedAdmin = async (req, res) => {
   try {
     const adminEmail = 'admin@example.com';
@@ -64,29 +66,29 @@ exports.seedAdmin = async (req, res) => {
       name: 'Super Admin',
       email: adminEmail,
       password: '123', // Will be hashed by pre-save
-      role: 'SUPER_ADMIN',
+      role: 'Admin', // Must match User schema enum: Admin, Supervisor, Student
       status: true
     });
 
     await user.save();
     res.json({ msg: 'Admin seeded successfully! Use admin@example.com / 123 to log in.' });
   } catch (err) {
-    res.status(500).send('Seed Error: ' + err.message);
+    res.status(500).json({ msg: 'Seed Error: ' + err.message });
   }
 };
 
 // Profile Management
 exports.updateProfile = async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, phone } = req.body;
 
-    // Find the user first to ensure we trigger the 'save' hook if password changes
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ msg: 'User not found' });
 
-    if (name) user.name = name;
-    if (email) user.email = email;
-    if (password) user.password = password; // The pre-save hook in User.js will hash this automatically
+    if (name != null) user.name = name;
+    if (email != null) user.email = email;
+    if (password != null && password !== '') user.password = password;
+    if (phone != null) user.phone = phone;
 
     await user.save();
 
@@ -95,7 +97,8 @@ exports.updateProfile = async (req, res) => {
       name: user.name,
       email: user.email,
       role: user.role,
-      profileImage: user.profileImage
+      profileImage: user.profileImage,
+      phone: user.phone
     });
   } catch (err) {
     res.status(500).send('Server Error');
