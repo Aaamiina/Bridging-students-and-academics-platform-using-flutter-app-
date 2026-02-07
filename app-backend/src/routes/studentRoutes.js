@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const path = require('path');
 const multer = require('multer');
-const { getMyTasks, submitTask, getFeedback, getMyProfile } = require('../controllers/studentController');
+const { getMyTasks, submitTask, getFeedback, getMyProfile, getMySupervisor } = require('../controllers/studentController');
 const { protect, authorize } = require('../middleware/authMiddleware');
 
 router.use(protect);
@@ -18,6 +18,10 @@ const upload = multer({ storage });
 // @route   GET api/student/profile
 // @desc    Get logged-in student's name, group from database
 router.get('/profile', getMyProfile);
+
+// @route   GET api/student/my-supervisor
+// @desc    Get supervisor assigned to student's group (for messaging)
+router.get('/my-supervisor', getMySupervisor);
 
 // @route   GET api/student/tasks
 // @desc    View tasks assigned to the student's group

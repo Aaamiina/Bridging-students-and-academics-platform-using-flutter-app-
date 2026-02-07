@@ -18,14 +18,20 @@ exports.login = async (req, res) => {
       user = await User.findOne({ email });
     }
 
-    if (!user || !user.status) {
-      return res.status(401).json({ msg: 'Invalid credentials or account inactive' });
+    if (!user) {
+      const msg = (studentId !== undefined && studentId !== null && String(studentId).trim() !== '')
+        ? 'No account found with this University ID or email. Please check and try again.'
+        : 'No account found with this email. Please check and try again.';
+      return res.status(401).json({ msg });
+    }
+    if (!user.status) {
+      return res.status(401).json({ msg: 'Your account is inactive. Please contact the administrator.' });
     }
 
     // 3. Use the helper method from the User Model to compare passwords
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({ msg: 'Invalid credentials' });
+      return res.status(401).json({ msg: 'Incorrect password. Please try again.' });
     }
 
     // 4. Role-based token generation (Admin, Supervisor, or Student)

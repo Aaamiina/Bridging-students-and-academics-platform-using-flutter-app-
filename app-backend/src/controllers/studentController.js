@@ -4,11 +4,39 @@ const Group = require('../models/group');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
+// Get supervisor assigned to the student's group (for messaging)
+exports.getMySupervisor = async (req, res) => {
+  try {
+    const student = await User.findById(req.user.id).select('group');
+    const groupValue = student?.group;
+    if (!groupValue) return res.status(404).json({ msg: 'You are not assigned to a group' });
+
+    const trimmed = String(groupValue).trim();
+    let group = await Group.findOne({ name: trimmed }).populate('supervisorId', 'name email');
+    if (!group && mongoose.Types.ObjectId.isValid(trimmed)) {
+      group = await Group.findById(trimmed).populate('supervisorId', 'name email');
+    }
+    if (!group) {
+      const normalized = normalizeGroupName(groupValue);
+      const allGroups = await Group.find().lean();
+      const found = allGroups.find(g => normalizeGroupName(g.name) === normalized);
+      if (found) group = await Group.findById(found._id).populate('supervisorId', 'name email');
+    }
+    if (!group || !group.supervisorId) {
+      return res.status(404).json({ msg: 'No supervisor assigned to your group' });
+    }
+    const sup = group.supervisorId;
+    res.json({ id: sup._id, name: sup.name, email: sup.email });
+  } catch (err) {
+    res.status(500).send('Server Error');
+  }
+};
+
 // Get current student profile from database (name, group, etc.)
 exports.getMyProfile = async (req, res) => {
   try {
     const student = await User.findById(req.user.id)
-      .select('name email group studentId')
+      .select('name email group studentId profileImage')
       .lean();
     if (!student) return res.status(404).json({ msg: 'User not found' });
     res.json({
@@ -16,6 +44,7 @@ exports.getMyProfile = async (req, res) => {
       email: (student.email || '').trim(),
       group: student.group ? String(student.group).trim() : null,
       studentId: student.studentId ? String(student.studentId).trim() : null,
+      profileImage: student.profileImage ? String(student.profileImage).trim() : null,
     });
   } catch (err) {
     res.status(500).send('Server Error');

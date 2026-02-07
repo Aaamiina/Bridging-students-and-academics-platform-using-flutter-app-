@@ -102,4 +102,20 @@ class StudentRepository {
       return null;
     }
   }
+
+  /// Supervisor assigned to the student's group (for messaging).
+  Future<Map<String, dynamic>?> getMySupervisor() async {
+    try {
+      final response = await http.get(
+        Uri.parse('$baseUrl/student/my-supervisor'),
+        headers: {"Authorization": "Bearer $_token"},
+      );
+      if (response.statusCode == 200) {
+        return Map<String, dynamic>.from(jsonDecode(response.body));
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
 }

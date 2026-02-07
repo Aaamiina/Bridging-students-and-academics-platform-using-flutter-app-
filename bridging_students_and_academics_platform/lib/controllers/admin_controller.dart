@@ -123,9 +123,12 @@
 
 
 
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
+import 'package:bridging_students_and_academics_platform/core/session_manager.dart';
 import 'package:bridging_students_and_academics_platform/data/repositories/admin_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 
 class AdminController extends GetxController {
   final AdminRepository _repo = AdminRepository();
@@ -210,6 +213,37 @@ class AdminController extends GetxController {
       fetchData(); // Refresh list to show updated supervisor field
     } else {
       Get.snackbar("Error", "Failed to assign supervisor", backgroundColor: Colors.red, colorText: Colors.white);
+    }
+    isLoading.value = false;
+  }
+
+  /// Unassign supervisor from group (makes group available for other supervisors)
+  Future<void> unassignSupervisor(String groupId) async {
+    isLoading.value = true;
+    bool success = false;
+    try {
+      final token = SessionManager().getToken();
+      if (token == null || token.isEmpty) {
+        Get.snackbar("Error", "Not logged in", backgroundColor: Colors.red, colorText: Colors.white);
+        isLoading.value = false;
+        return;
+      }
+      final response = await http.put(
+        Uri.parse('${AppConfig.baseUrl}/admin/groups/$groupId/unassign-supervisor'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $token",
+        },
+      ).timeout(const Duration(seconds: 10));
+      success = response.statusCode == 200;
+    } catch (e) {
+      print("DEBUG: AdminController.unassignSupervisor ERROR: $e");
+    }
+    if (success) {
+      Get.snackbar("Success", "Supervisor removed from group", backgroundColor: Colors.green, colorText: Colors.white);
+      fetchData();
+    } else {
+      Get.snackbar("Error", "Failed to remove supervisor from group", backgroundColor: Colors.red, colorText: Colors.white);
     }
     isLoading.value = false;
   }

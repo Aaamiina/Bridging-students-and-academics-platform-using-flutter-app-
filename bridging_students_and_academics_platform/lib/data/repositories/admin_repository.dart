@@ -241,6 +241,23 @@ class AdminRepository {
     }
   }
 
+  /// Unassign supervisor from group (makes group available for other supervisors).
+  Future<bool> unassignSupervisor(String groupId) async {
+    try {
+      final response = await http.put(
+        Uri.parse('$baseUrl/admin/groups/$groupId/unassign-supervisor'),
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": "Bearer $_token"
+        },
+      );
+      return response.statusCode == 200;
+    } catch (e) {
+      print("DEBUG: AdminRepository.unassignSupervisor ERROR: $e");
+      return false;
+    }
+  }
+
   /// ASSIGN SUPERVISOR TO GROUP
   /// Links a Group ID to a Supervisor ID in the Group collection.
   Future<bool> assignSupervisor(String groupId, String supervisorId) async {

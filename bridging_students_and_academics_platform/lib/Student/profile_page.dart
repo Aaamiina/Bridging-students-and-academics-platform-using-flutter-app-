@@ -1,4 +1,5 @@
 import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
+import 'package:bridging_students_and_academics_platform/core/validators.dart';
 import 'package:bridging_students_and_academics_platform/data/repositories/auth_repository.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -13,6 +14,7 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
+  final _formKey = GlobalKey<FormState>();
   final GetStorage _storage = GetStorage();
   final AuthController authController = Get.find<AuthController>();
   late TextEditingController _nameController;
@@ -130,9 +132,16 @@ class _ProfilePageState extends State<ProfilePage> {
               ),
             ),
             const SizedBox(height: 30),
-            _profileField("Full Name", _nameController),
-            _profileField("Email", _emailController, readOnly: true),
-            _profileField("Phone", _phoneController),
+            Form(
+              key: _formKey,
+              child: Column(
+                children: [
+                  _profileFormField("Full Name", _nameController, validator: (v) => Validators.required(v, 'Full name') ?? Validators.name(v)),
+                  _profileFormField("Email", _emailController, readOnly: true),
+                  _profileFormField("Phone", _phoneController, validator: Validators.phone),
+                ],
+              ),
+            ),
             const SizedBox(height: 40),
             Obx(() => ElevatedButton(
               style: ElevatedButton.styleFrom(
@@ -141,7 +150,9 @@ class _ProfilePageState extends State<ProfilePage> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                 elevation: 2,
               ),
-              onPressed: _isUpdating.value ? null : _updateProfile,
+              onPressed: _isUpdating.value ? null : () {
+                if (_formKey.currentState?.validate() ?? false) _updateProfile();
+              },
               child: _isUpdating.value
                   ? const SizedBox(height: 24, width: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
                   : const Text("Edit Profile", style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
@@ -164,11 +175,11 @@ class _ProfilePageState extends State<ProfilePage> {
           ],
         ),
       ),
-      bottomNavigationBar: const CustomNavBar(currentIndex: 3),
+      bottomNavigationBar: const CustomNavBar(currentIndex: 4),
     );
   }
 
-  Widget _profileField(String label, TextEditingController controller, {bool readOnly = false}) {
+  Widget _profileFormField(String label, TextEditingController controller, {bool readOnly = false, String? Function(String?)? validator}) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 20),
       child: Column(
@@ -178,7 +189,7 @@ class _ProfilePageState extends State<ProfilePage> {
             padding: const EdgeInsets.only(left: 4, bottom: 8),
             child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.black54)),
           ),
-          TextField(
+          TextFormField(
             controller: controller,
             readOnly: readOnly,
             decoration: InputDecoration(
@@ -190,7 +201,13 @@ class _ProfilePageState extends State<ProfilePage> {
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide(color: Colors.grey.shade300),
               ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: const BorderSide(color: Colors.red),
+              ),
+              errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
             ),
+            validator: readOnly ? null : validator,
           ),
         ],
       ),

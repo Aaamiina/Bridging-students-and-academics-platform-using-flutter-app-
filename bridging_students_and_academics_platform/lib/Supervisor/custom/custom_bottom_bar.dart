@@ -34,23 +34,23 @@ class SupervisorBottomBar extends StatelessWidget {
           elevation: 0,
           selectedItemColor: Colors.white,
           unselectedItemColor: Colors.white60,
-          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
-          unselectedLabelStyle: const TextStyle(fontSize: 12),
+          selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+          unselectedLabelStyle: const TextStyle(fontSize: 11),
           items: const [
             BottomNavigationBarItem(
-              icon: Icon(Icons.group_rounded), 
+              icon: Icon(Icons.groups_rounded, size: 24),
               label: 'Groups',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.format_list_bulleted_rounded), 
+              icon: Icon(Icons.assignment_rounded, size: 24),
               label: 'Tasks',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.calendar_month_rounded), 
+              icon: Icon(Icons.inbox_rounded, size: 24),
               label: 'Submissions',
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.person_rounded), 
+              icon: Icon(Icons.person_rounded, size: 24),
               label: 'Profile',
             ),
           ],

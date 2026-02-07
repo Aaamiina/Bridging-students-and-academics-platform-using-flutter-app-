@@ -66,41 +66,41 @@ class _SubmissionPageState extends State<SubmissionPage> {
             padding: const EdgeInsets.all(20),
             physics: const AlwaysScrollableScrollPhysics(),
             children: [
-            const Padding(
-              padding: EdgeInsets.only(bottom: 16),
-              child: Text(
-                "Submitted tasks",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A6D3F)),
+              const Padding(
+                padding: EdgeInsets.only(bottom: 16),
+                child: Text(
+                  "Submitted tasks",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFF4A6D3F)),
+                ),
               ),
-            ),
-            const Text("Tap to view, download file, and give feedback.", style: TextStyle(color: Colors.grey, fontSize: 13)),
-            const SizedBox(height: 12),
-            ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: controller.allSubmissions.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 15),
-              itemBuilder: (context, index) {
-                final sub = controller.allSubmissions[index];
-                final task = sub['taskId'] is Map ? sub['taskId'] as Map : null;
-                final student = sub['studentId'] is Map ? sub['studentId'] as Map : null;
-                final title = task?['title']?.toString() ?? 'Task';
-                final groupName = student?['name']?.toString() ?? 'Student';
-                final isDone = sub['status'] == 'Graded' || sub['status'] == 'Submitted';
-                final status = sub['status'] == 'Graded' ? 'Graded' : 'Submitted';
-                return _buildSubmissionItem(
-                  context,
-                  title: title,
-                  group: groupName,
-                  status: status,
-                  isDone: isDone,
-                  submission: sub,
-                );
-              },
-            ),
-          ],
+              const Text("Tap to view, download file, and give feedback.", style: TextStyle(color: Colors.grey, fontSize: 13)),
+              const SizedBox(height: 12),
+              ListView.separated(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: controller.allSubmissions.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 15),
+                itemBuilder: (context, index) {
+                  final sub = controller.allSubmissions[index];
+                  final task = sub['taskId'] is Map ? sub['taskId'] as Map : null;
+                  final student = sub['studentId'] is Map ? sub['studentId'] as Map : null;
+                  final title = task?['title']?.toString() ?? 'Task';
+                  final groupName = student?['name']?.toString() ?? 'Student';
+                  final isDone = sub['status'] == 'Graded' || sub['status'] == 'Submitted';
+                  final status = sub['status'] == 'Graded' ? 'Graded' : 'Submitted';
+                  return _buildSubmissionItem(
+                    context,
+                    title: title,
+                    group: groupName,
+                    status: status,
+                    isDone: isDone,
+                    submission: sub,
+                  );
+                },
+              ),
+            ],
           ),
-        ),
+        );
       }),
       bottomNavigationBar: SupervisorBottomBar(
         currentIndex: _selectedIndex,

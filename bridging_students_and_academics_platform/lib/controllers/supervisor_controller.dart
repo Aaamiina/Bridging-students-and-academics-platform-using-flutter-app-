@@ -22,6 +22,7 @@ class SupervisorController extends GetxController {
   void onInit() {
     super.onInit();
     fetchGroups();
+    fetchTasks(); // Load tasks as soon as supervisor is active so Tasks tab shows them on first open
   }
 
 
@@ -123,9 +124,10 @@ Future<void> fetchTasks() async {
       bool success = await _repo.deleteTask(taskId);
 
       if (success) {
+        // Update UI immediately so the task disappears without refresh
+        tasks.removeWhere((t) => (t['_id'] ?? t['id']).toString() == taskId);
         Get.back(); // Close Dialog
         Get.back(); // Return to Task Page
-        fetchTasks(); // Refresh List
         Get.snackbar("Deleted", "Task has been removed",
             backgroundColor: Colors.black87, colorText: Colors.white);
       }

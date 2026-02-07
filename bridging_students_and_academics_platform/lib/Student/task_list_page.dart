@@ -66,18 +66,17 @@ class _TaskListPageState extends State<TaskListPage> {
           itemCount: controller.tasks.length,
           itemBuilder: (context, index) {
             final task = controller.tasks[index];
-            // Identify fields from backend response
-             // Task model (title, description, deadline, etc.)
             final String title = task['title'] ?? 'Task';
             String deadline = task['deadline']?.toString() ?? 'No Deadline';
             if (deadline.contains('T')) deadline = deadline.split('T')[0];
             final String taskId = task['_id'] ?? '';
             final bool submitted = task['submitted'] == true;
-            final String status = submitted ? 'Submitted' : 'Pending';
-            final Color statusColor = submitted ? Colors.green : Colors.orange;
-            final IconData statusIcon = submitted ? Icons.check_circle : Icons.storage;
+            final bool isExpired = _isTaskExpired(task['deadline']);
+            final String status = isExpired ? 'Expired' : (submitted ? 'Submitted' : 'Pending');
+            final Color statusColor = isExpired ? Colors.grey : (submitted ? Colors.green : Colors.orange);
+            final IconData statusIcon = isExpired ? Icons.event_busy : (submitted ? Icons.check_circle : Icons.storage);
 
-            return _taskCard(context, title, deadline, status, statusColor, statusIcon, taskId);
+            return _taskCard(context, title, deadline, status, statusColor, statusIcon, taskId, isExpired);
           },
         );
       }),
@@ -85,15 +84,25 @@ class _TaskListPageState extends State<TaskListPage> {
     );
   }
 
-  Widget _taskCard(BuildContext context, String title, String date, String status, Color color, IconData icon, String taskId) {
+  static bool _isTaskExpired(dynamic deadline) {
+    if (deadline == null) return false;
+    try {
+      final dt = DateTime.tryParse(deadline.toString().trim());
+      return dt != null && dt.isBefore(DateTime.now());
+    } catch (_) {
+      return false;
+    }
+  }
+
+  Widget _taskCard(BuildContext context, String title, String date, String status, Color color, IconData icon, String taskId, bool isExpired) {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isExpired ? Colors.grey.shade200 : Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(isExpired ? 0.03 : 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -102,15 +111,22 @@ class _TaskListPageState extends State<TaskListPage> {
       child: ListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
         leading: CircleAvatar(
-          backgroundColor: color.withOpacity(0.1),
+          backgroundColor: color.withOpacity(0.2),
           child: Icon(icon, color: color),
         ),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-        subtitle: Text("Due: $date", style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        title: Text(
+          title,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: isExpired ? Colors.grey.shade700 : null,
+          ),
+        ),
+        subtitle: Text("Due: $date", style: TextStyle(color: isExpired ? Colors.grey.shade600 : Colors.grey, fontSize: 12)),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
+            color: color.withOpacity(0.2),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Text(
@@ -118,14 +134,16 @@ class _TaskListPageState extends State<TaskListPage> {
             style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 10),
           ),
         ),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => SubmitTaskPage(taskId: taskId, taskName: title, dueDate: date),
-            ),
-          );
-        },
+        onTap: isExpired
+            ? null
+            : () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => SubmitTaskPage(taskId: taskId, taskName: title, dueDate: date),
+                  ),
+                );
+              },
       ),
     );
   }

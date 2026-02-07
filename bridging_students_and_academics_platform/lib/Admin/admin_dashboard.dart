@@ -1,3 +1,4 @@
+import 'package:bridging_students_and_academics_platform/Admin/admin_bottom_bar.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_notifications_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_submissions_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_tasks_page.dart';
@@ -74,25 +75,29 @@ class _AdminDashboardState extends State<AdminDashboard> {
             letterSpacing: 1.2,
           ),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.bug_report, color: Colors.white),
-            tooltip: 'Debug Session',
-            onPressed: () {
-              final token = Get.find<AuthController>().token;
-               Get.defaultDialog(
-                title: "CURRENT SESSION",
-                middleText: "Token: ${token != null && token.isNotEmpty ? 'EXISTS (${token.substring(0,10)}...)' : 'EMPTY/NULL'}",
-                textConfirm: "OK",
-                onConfirm: () => Get.back(),
-              );
-            },
-          )
-        ],
       ),
       drawer: _buildDrawer(),
       body: pages[selectedIndex],
+      bottomNavigationBar: AdminBottomBar(
+        currentIndex: _bottomBarIndex,
+        onTap: (index) => setState(() => selectedIndex = _pageIndexFromBottom(index)),
+      ),
     );
+  }
+
+  /// Bottom bar: 0=Dashboard, 1=Groups, 2=Supervisors, 3=Users, 4=Profile
+  int get _bottomBarIndex {
+    if (selectedIndex == 0) return 0; // Dashboard
+    if (selectedIndex == 3) return 1; // Groups
+    if (selectedIndex == 2) return 2; // Supervisors
+    if (selectedIndex == 1) return 3; // Users
+    if (selectedIndex == 7) return 4; // Profile
+    return 0; // When on Tasks(4), Submissions(5), Notifications(6) show Dashboard selected
+  }
+
+  int _pageIndexFromBottom(int bottomIndex) {
+    const map = [0, 3, 2, 1, 7]; // Dashboard, Groups, Supervisors, Users, Profile
+    return map[bottomIndex];
   }
 
   Widget _buildDrawer() {
@@ -121,22 +126,14 @@ class _AdminDashboardState extends State<AdminDashboard> {
             );
           }),
           
-          // SCROLLABLE MENU ITEMS
+          // Drawer: Notifications, Tasks, Submissions
           Expanded(
             child: ListView(
               padding: EdgeInsets.zero,
               children: [
-                _drawerTile(Icons.dashboard_outlined, "Dashboard", 0),
-                _drawerTile(Icons.people_outline, "Users", 1),
-                _drawerTile(Icons.supervisor_account_outlined, "Supervisors", 2),
-                _drawerTile(Icons.group_outlined, "Groups", 3),
-                const Divider(),
-                
-                // ADDED SECTIONS HERE
-                _drawerTile(Icons.task_outlined, "Tasks", 4),
-                _drawerTile(Icons.file_present_outlined, "Submissions", 5),
-                _drawerTile(Icons.notifications_none_outlined, "Notifications", 6),
-                _drawerTile(Icons.person_outline, "Profile", 7),
+                _drawerTile(Icons.notifications_outlined, "Notifications", 6),
+                _drawerTile(Icons.format_list_bulleted_rounded, "Tasks", 4),
+                _drawerTile(Icons.calendar_month_rounded, "Submissions", 5),
               ],
             ),
           ),

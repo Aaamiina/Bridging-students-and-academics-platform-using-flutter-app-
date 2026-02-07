@@ -5,14 +5,15 @@ const {
     getUsers,
     updateUser,
     deleteUser,
-    toggleUserStatus
+    toggleUserStatus,
+    importUsers
 } = require('../../controllers/adminController/userController');
 const { protect, authorize } = require('../../middleware/authMiddleware');
 
 const multer = require('multer');
 const path = require('path');
 
-// Configure Multer Storage
+// Configure Multer Storage (disk - for profile images)
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, 'uploads/'); // Ensure this directory exists
@@ -23,6 +24,9 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage: storage });
 
+// Memory storage for CSV import (to read file buffer)
+const uploadMemory = multer({ storage: multer.memoryStorage() });
+
 // Apply protection to all routes below
 router.use(protect);
 router.use(authorize('Admin'));
@@ -30,6 +34,9 @@ router.use(authorize('Admin'));
 // Debugging Middleware
 const logBefore = (req, res, next) => { console.log('DEBUG: Middleware - Before Multer'); next(); };
 const logAfter = (req, res, next) => { console.log('DEBUG: Middleware - After Multer'); next(); };
+
+// Import users from CSV (must be before /:id)
+router.post('/import', uploadMemory.single('file'), importUsers);
 
 // Base path: /api/admin/users
 router.route('/')

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:bridging_students_and_academics_platform/Admin/admin_group_members_page.dart';
 import 'package:bridging_students_and_academics_platform/Admin/admin_dashboard.dart';
 import 'package:bridging_students_and_academics_platform/Login.dart';
@@ -9,6 +10,7 @@ import 'package:flutter/material.dart';
 import 'package:bridging_students_and_academics_platform/Student/dashboard_page.dart';
 import 'package:bridging_students_and_academics_platform/Student/task_list_page.dart';
 import 'package:bridging_students_and_academics_platform/Student/feedback_page.dart';
+import 'package:bridging_students_and_academics_platform/Student/student_messages_page.dart';
 import 'package:bridging_students_and_academics_platform/Student/profile_page.dart';
 import 'package:bridging_students_and_academics_platform/Supervisor/group/supervisor_groups_page.dart';
 import 'package:bridging_students_and_academics_platform/Supervisor/tasks/task_Page.dart';
@@ -19,14 +21,24 @@ import 'package:bridging_students_and_academics_platform/log_admin.dart';
 import 'package:bridging_students_and_academics_platform/controllers/auth_controller.dart';
 
 void main() async {
-  print("DEBUG: App version starting... (v3-Heartbeat)");
   WidgetsFlutterBinding.ensureInitialized();
-  await GetStorage.init(); 
-  
-  // Register AuthController permanently at startup
-  Get.put(AuthController(), permanent: true);
-
-  runApp(const MyApp());
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    debugPrint('FlutterError: ${details.exception}\n${details.stack}');
+  };
+  runZonedGuarded(() async {
+    debugPrint("DEBUG: App starting...");
+    try {
+      await GetStorage.init();
+      Get.put(AuthController(), permanent: true);
+      runApp(const MyApp());
+    } catch (e, stack) {
+      debugPrint('FATAL on startup: $e\n$stack');
+      rethrow;
+    }
+  }, (error, stack) {
+    debugPrint('Uncaught error: $error\n$stack');
+  });
 }
 
 class MyApp extends StatelessWidget {
@@ -49,6 +61,7 @@ class MyApp extends StatelessWidget {
         GetPage(name: '/student_dashboard', page: () => const StudentDashboard()),
         GetPage(name: '/student_tasks', page: () => TaskListPage()),
         GetPage(name: '/student_feedback', page: () => const FeedbackPage()),
+        GetPage(name: '/student_messages', page: () => const StudentMessagesPage()),
         GetPage(name: '/student_profile', page: () => const ProfilePage()),
         GetPage(name: '/supervisor_dashboard', page: () =>  SupervisorGroupsPage()),
         GetPage(name: '/supervisor_tasks', page: () => const TaskPage()),

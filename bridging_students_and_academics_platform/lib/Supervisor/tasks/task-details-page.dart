@@ -27,11 +27,17 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
     _titleController = TextEditingController(text: widget.taskData['title']);
     _descController = TextEditingController(text: widget.taskData['description']);
     
-    // Formatting MongoDB Date string to YYYY-MM-DD
+    // Format deadline consistently as YYYY-MM-DD HH:mm for display
     String rawDate = widget.taskData['deadline'] ?? "";
-    _deadlineController = TextEditingController(
-      text: rawDate.contains('T') ? rawDate.split('T')[0] : rawDate
-    );
+    String displayDeadline = rawDate;
+    try {
+      final dt = DateTime.tryParse(rawDate);
+      if (dt != null) {
+        displayDeadline = '${dt.year}-${dt.month.toString().padLeft(2, '0')}-${dt.day.toString().padLeft(2, '0')} '
+            '${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
+      }
+    } catch (_) {}
+    _deadlineController = TextEditingController(text: displayDeadline);
     final groupId = widget.taskData['groupId'];
     String groupName = '';
     if (groupId is Map && groupId['name'] != null) {
@@ -49,7 +55,10 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
       textConfirm: "Delete",
       confirmTextColor: Colors.white,
       buttonColor: Colors.red,
-      onConfirm: () => controller.deleteTask(widget.taskData['_id']),
+      onConfirm: () {
+                  final id = widget.taskData['_id'] ?? widget.taskData['id'];
+                  controller.deleteTask(id?.toString() ?? '');
+                },
     );
   }
 
@@ -90,7 +99,7 @@ class _TaskDetailsPageState extends State<TaskDetailsPage> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
                 onPressed: controller.isLoading.value ? null : () {
-                  controller.updateTask(widget.taskData['_id'], {
+                  controller.updateTask((widget.taskData['_id'] ?? widget.taskData['id'])?.toString() ?? '', {
                     "title": _titleController.text,
                     "description": _descController.text,
                     "deadline": _deadlineController.text,

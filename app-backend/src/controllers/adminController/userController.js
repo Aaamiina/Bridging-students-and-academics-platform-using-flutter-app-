@@ -112,6 +112,93 @@ exports.toggleUserStatus = async (req, res) => {
   }
 };
 
+// Bulk Import Users from CSV
+exports.importUsers = async (req, res) => {
+  try {
+    if (!req.file || !req.file.buffer) {
+      return res.status(400).json({ msg: 'No CSV file uploaded' });
+    }
+    const csvText = req.file.buffer.toString('utf8');
+    const lines = csvText.split(/\r?\n/).filter(line => line.trim());
+    if (lines.length < 2) {
+      return res.status(400).json({ msg: 'CSV must have header row and at least one data row' });
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const nameIdx = headers.findIndex(h => h === 'name');
+    const emailIdx = headers.findIndex(h => h === 'email');
+    const passwordIdx = headers.findIndex(h => h === 'password');
+    const roleIdx = headers.findIndex(h => h === 'role');
+    const studentIdIdx = headers.findIndex(h => h === 'studentid');
+    const phoneIdx = headers.findIndex(h => h === 'phone');
+
+    if (nameIdx < 0 || emailIdx < 0 || passwordIdx < 0 || roleIdx < 0) {
+      return res.status(400).json({
+        msg: 'CSV must have columns: name, email, password, role (optional: studentId, phone)'
+      });
+    }
+
+    const results = { created: 0, skipped: [], errors: [] };
+
+    for (let i = 1; i < lines.length; i++) {
+      const vals = lines[i].split(',').map(v => v.trim());
+      const name = vals[nameIdx] || '';
+      const email = vals[emailIdx] || '';
+      const password = vals[passwordIdx] || '';
+      let role = (vals[roleIdx] || 'Student').trim();
+      const studentId = studentIdIdx >= 0 ? (vals[studentIdIdx] || '') : '';
+      const phone = phoneIdx >= 0 ? (vals[phoneIdx] || '') : '';
+
+      if (!name || !email || !password) {
+        results.errors.push(`Row ${i + 1}: name, email, password required`);
+        continue;
+      }
+
+      role = ['Admin', 'Supervisor', 'Student'].includes(role) ? role : 'Student';
+
+      const existing = await User.findOne({ email });
+      if (existing) {
+        results.skipped.push(email);
+        continue;
+      }
+
+      if (role === 'Student' && studentId) {
+        const existingStudent = await User.findOne({ studentId });
+        if (existingStudent) {
+          results.skipped.push(`Student ${studentId}`);
+          continue;
+        }
+      }
+
+      try {
+        const user = new User({
+          name,
+          email,
+          password,
+          role,
+          phone: phone || undefined,
+          studentId: role === 'Student' && studentId ? studentId : undefined,
+          status: true
+        });
+        await user.save();
+        results.created++;
+      } catch (err) {
+        results.errors.push(`Row ${i + 1} (${email}): ${err.message}`);
+      }
+    }
+
+    res.status(200).json({
+      msg: 'Import completed',
+      created: results.created,
+      skipped: results.skipped,
+      errors: results.errors
+    });
+  } catch (err) {
+    console.error('DEBUG: importUsers error:', err);
+    res.status(500).json({ msg: 'Server Error: ' + err.message });
+  }
+};
+
 // Delete User
 exports.deleteUser = async (req, res) => {
   try {

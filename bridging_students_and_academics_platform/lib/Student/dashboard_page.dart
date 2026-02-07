@@ -1,7 +1,9 @@
 import 'package:bridging_students_and_academics_platform/controllers/student_controller.dart';
 import 'package:bridging_students_and_academics_platform/Student/task_list_page.dart';
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:get_storage/get_storage.dart';
 import 'custom_nav_bar.dart';
 import 'notifications_page.dart';
 
@@ -14,6 +16,7 @@ class StudentDashboard extends StatefulWidget {
 
 class _StudentDashboardState extends State<StudentDashboard> {
   final StudentController controller = Get.put(StudentController());
+  final GetStorage _storage = GetStorage();
 
   @override
   void initState() {
@@ -34,18 +37,22 @@ class _StudentDashboardState extends State<StudentDashboard> {
           automaticallyImplyLeading: false,
           backgroundColor: Colors.transparent,
           elevation: 0,
-          flexibleSpace: Container(
-            decoration: const BoxDecoration(
-              color: Color(0xFF4A6D3F),
-              borderRadius: BorderRadius.only(
-                bottomLeft: Radius.circular(30),
-                bottomRight: Radius.circular(30),
+          flexibleSpace: SafeArea(
+            child: Container(
+              margin: const EdgeInsets.only(bottom: 0),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              decoration: const BoxDecoration(
+                color: Color(0xFF4A6D3F),
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(30),
+                  bottomRight: Radius.circular(30),
+                ),
               ),
-            ),
-            child: SafeArea(
-              child: Stack(
+              child: Row(
                 children: [
-                  const Center(
+                  Obx(() => _buildProfileAvatar()),
+                  const SizedBox(width: 14),
+                  const Expanded(
                     child: Text(
                       "Student Dashboard",
                       style: TextStyle(
@@ -55,21 +62,11 @@ class _StudentDashboardState extends State<StudentDashboard> {
                       ),
                     ),
                   ),
-                  Align(
-                    alignment: Alignment.centerRight,
-                    child: Padding(
-                      padding: const EdgeInsets.only(right: 10),
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.notifications_active_outlined,
-                          color: Colors.white,
-                          size: 26,
-                        ),
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const NotificationsPage()),
-                        ),
-                      ),
+                  IconButton(
+                    icon: const Icon(Icons.notifications_outlined, color: Colors.white, size: 24),
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const NotificationsPage()),
                     ),
                   ),
                 ],
@@ -147,6 +144,25 @@ class _StudentDashboardState extends State<StudentDashboard> {
         ),
       ),
       bottomNavigationBar: const CustomNavBar(currentIndex: 0),
+    );
+  }
+
+  Widget _buildProfileAvatar() {
+    final profileImage = controller.studentProfileImage.value ?? _storage.read<String>('user_image');
+    final hasImage = profileImage != null && profileImage.trim().isNotEmpty;
+    String? fullUrl;
+    if (hasImage) {
+      final path = profileImage!.trim().replaceFirst(RegExp(r'^/'), '');
+      final base = AppConfig.imageBaseUrl.endsWith('/') ? AppConfig.imageBaseUrl : '${AppConfig.imageBaseUrl}/';
+      fullUrl = '$base$path';
+    }
+    return CircleAvatar(
+      radius: 24,
+      backgroundColor: Colors.white,
+      backgroundImage: fullUrl != null ? NetworkImage(fullUrl) : null,
+      child: fullUrl == null
+          ? const Icon(Icons.person_rounded, color: Color(0xFF4A6D3F), size: 32)
+          : null,
     );
   }
 

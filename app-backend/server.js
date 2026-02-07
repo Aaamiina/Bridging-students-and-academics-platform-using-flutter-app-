@@ -26,6 +26,7 @@ app.use((req, res, next) => {
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/supervisor', require('./src/routes/supervisorRoutes'));
 app.use('/api/student', require('./src/routes/studentRoutes'));
+app.use('/api/messages', require('./src/routes/messageRoutes'));
 
 // admin
 // admin

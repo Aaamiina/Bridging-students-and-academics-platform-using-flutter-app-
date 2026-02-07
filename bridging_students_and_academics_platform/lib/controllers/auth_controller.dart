@@ -34,9 +34,10 @@ class AuthController extends GetxController {
       String? role = _storage.read('user_role');
       String? image = _storage.read('user_image');
 
+      String? uid = _storage.read('user_id');
       if (name != null && email != null && role != null) {
         user.value = UserModel(
-          id: '', 
+          id: uid ?? '',
           name: name,
           email: email,
           role: role,
@@ -63,6 +64,7 @@ class AuthController extends GetxController {
         print("DEBUG: Login Successful. Token received: '$token'");
 
         await SessionManager().setToken(token);
+        await _storage.write('user_id', loggedInUser.id);
         await _storage.write('user_role', loggedInUser.role);
         await _storage.write('user_name', loggedInUser.name);
         await _storage.write('user_email', loggedInUser.email);
@@ -106,5 +108,34 @@ class AuthController extends GetxController {
     await SessionManager().clearSession();
     user.value = null;
     Get.offAllNamed('/login');
+  }
+
+  /// Update stored user data after profile edit (name, email, phone, profileImage).
+  void updateStoredUser({String? name, String? email, String? phone, String? profileImage}) {
+    final u = user.value;
+    if (u == null) return;
+    final newName = name ?? u.name;
+    final newEmail = email ?? u.email;
+    final newImage = profileImage ?? u.profileImage;
+    _storage.write('user_name', newName);
+    _storage.write('user_email', newEmail);
+    if (profileImage != null) _storage.write('user_image', profileImage);
+    user.value = UserModel(
+      id: u.id,
+      name: newName,
+      email: newEmail,
+      role: u.role,
+      group: u.group,
+      studentId: u.studentId,
+      profileImage: newImage,
+    );
+  }
+
+  /// Change password via auth/profile (works for Admin, Supervisor, Student).
+  Future<bool> changePassword(String newPassword) async {
+    final t = token;
+    if (t == null || t.isEmpty) return false;
+    final res = await _authRepository.updateProfile(t, password: newPassword);
+    return res != null;
   }
 }

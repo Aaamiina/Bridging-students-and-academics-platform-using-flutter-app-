@@ -3,6 +3,7 @@ import 'package:bridging_students_and_academics_platform/Supervisor/custom/custo
 import 'package:get/get.dart';
 import 'package:get_storage/get_storage.dart';
 import 'package:bridging_students_and_academics_platform/controllers/supervisor_controller.dart';
+import 'package:bridging_students_and_academics_platform/core/validators.dart';
 import 'package:bridging_students_and_academics_platform/data/repositories/auth_repository.dart';
 
 class ProfilePageSup extends StatefulWidget {
@@ -13,6 +14,7 @@ class ProfilePageSup extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePageSup> {
+  final _formKey = GlobalKey<FormState>();
   final SupervisorController controller = Get.isRegistered<SupervisorController>()
       ? Get.find<SupervisorController>()
       : Get.put(SupervisorController());
@@ -77,27 +79,28 @@ class _ProfilePageState extends State<ProfilePageSup> {
             // Profile Info Card
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
-              child: Container(
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5))],
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    _buildLabel("Full Name"),
-                    _buildProfileTextField(_nameController),
-                    const SizedBox(height: 20),
-                    
-                    _buildLabel("Email Address"),
-                    _buildProfileTextField(_emailController, isEnabled: false), // Usually email is read-only
-                    const SizedBox(height: 20),
-                    
-                    _buildLabel("Phone Number"),
-                    _buildProfileTextField(_phoneController),
-                  ],
+              child: Form(
+                key: _formKey,
+                child: Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.03), blurRadius: 10, offset: const Offset(0, 5))],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildLabel("Full Name"),
+                      _buildProfileTextFormField(_nameController, validator: (v) => Validators.required(v, 'Full name') ?? Validators.name(v)),
+                      const SizedBox(height: 20),
+                      _buildLabel("Email Address"),
+                      _buildProfileTextField(_emailController, isEnabled: false),
+                      const SizedBox(height: 20),
+                      _buildLabel("Phone Number"),
+                      _buildProfileTextFormField(_phoneController, validator: Validators.phone),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -116,7 +119,9 @@ class _ProfilePageState extends State<ProfilePageSup> {
                         backgroundColor: const Color(0xFF4A6D3F),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       ),
-                      onPressed: _updateProfile,
+                      onPressed: () {
+                        if (_formKey.currentState?.validate() ?? false) _updateProfile();
+                      },
                       child: const Text("Update Profile", style: TextStyle(color: Colors.white, fontSize: 16)),
                     ),
                   ),
@@ -219,6 +224,31 @@ class _ProfilePageState extends State<ProfilePageSup> {
           borderSide: const BorderSide(color: Color(0xFF4A6D3F)),
         ),
       ),
+    );
+  }
+
+  Widget _buildProfileTextFormField(TextEditingController controller, {String? Function(String?)? validator}) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFFE0E0E0)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xFF4A6D3F)),
+        ),
+        errorBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Colors.red),
+        ),
+        errorStyle: const TextStyle(color: Colors.red, fontSize: 12),
+      ),
+      validator: validator,
     );
   }
 }

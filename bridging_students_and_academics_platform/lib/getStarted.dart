@@ -45,10 +45,10 @@ class _GetStartedPageState extends State<GetStartedPage>
 
     return SafeArea(
       child: Scaffold(
-        backgroundColor: const Color(0xFFF4F6F2),
+        backgroundColor: Colors.white,
         body: Stack(
           children: [
-            // Decorative circles
+            // Decorative circles – app brand green
             Positioned(
               top: -40,
               right: -40,
@@ -56,7 +56,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                 width: 140,
                 height: 140,
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.25),
+                  color: const Color(0xFF4A6D3F).withOpacity(0.25),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -68,7 +68,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                 width: 160,
                 height: 160,
                 decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.25),
+                  color: const Color(0xFF4A6D3F).withOpacity(0.25),
                   shape: BoxShape.circle,
                 ),
               ),
@@ -99,43 +99,52 @@ class _GetStartedPageState extends State<GetStartedPage>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          // Heading
+                          // Heading – app brand green
                           Text(
                             "Bridging Students & Academics",
                             textAlign: TextAlign.center,
-                            style: TextStyle(
+                            style: const TextStyle(
                               fontFamily: 'InriaSerif',
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: Colors.green.shade800,
+                              color: Color(0xFF4A6D3F),
                             ),
                           ),
                           const SizedBox(height: 12),
-                          // Subheading
+                          // Subheading – muted dark green/grey
                           Text(
                             "One platform for supervision, groups, and submissions",
                             textAlign: TextAlign.center,
                             style: TextStyle(
                               fontFamily: 'InriaSerif',
                               fontSize: 16,
-                              color: Colors.green.shade700,
+                              color: Colors.grey.shade700,
                             ),
                           ),
                           const SizedBox(height: 20),
-                          // Illustration
-                          Container(
-                            width: size.width * 0.7,
-                            height: size.width * 0.5,
-                            decoration: const BoxDecoration(
-                              image: DecorationImage(
-                                image: AssetImage(
-                                    "assets/images/coll.png"), // replace with your illustration
-                                fit: BoxFit.contain,
+                          // Illustration – light green tint to match app
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: Container(
+                              width: size.width * 0.7,
+                              height: size.width * 0.5,
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF4A6D3F).withOpacity(0.08),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Image.asset(
+                                "assets/images/coll.png",
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => Icon(
+                                  Icons.school_rounded,
+                                  size: 64,
+                                  color: const Color(0xFF4A6D3F).withOpacity(0.4),
+                                ),
                               ),
                             ),
                           ),
                           const SizedBox(height: 30),
-                          // Get Started Button
+                          // Get Started Button – app brand green (same as login/dashboard)
                           GestureDetector(
                             onTapDown: (_) {
                               setState(() => _isButtonPressed = true);
@@ -159,11 +168,7 @@ class _GetStartedPageState extends State<GetStartedPage>
                                 width: double.infinity,
                                 height: 55,
                                 decoration: BoxDecoration(
-                                  gradient: const LinearGradient(
-                                    colors: [Color(0xFF4F7F3B), Color(0xFF7BC043)],
-                                    begin: Alignment.topLeft,
-                                    end: Alignment.bottomRight,
-                                  ),
+                                  color: const Color(0xFF4A6D3F),
                                   borderRadius: BorderRadius.circular(12),
                                   boxShadow: [
                                     BoxShadow(

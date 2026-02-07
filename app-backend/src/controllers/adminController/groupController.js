@@ -159,6 +159,23 @@ exports.assignSupervisor = async (req, res) => {
     }
 };
 
+// Unassign / Remove supervisor from group (makes group available for other supervisors)
+exports.unassignSupervisor = async (req, res) => {
+    try {
+        const { groupId } = req.params;
+        if (!mongoose.Types.ObjectId.isValid(groupId)) {
+            return res.status(400).json({ msg: 'Invalid Group ID format' });
+        }
+        const group = await Group.findById(groupId);
+        if (!group) return res.status(404).json({ msg: 'Group not found' });
+        group.supervisorId = null;
+        await group.save();
+        res.json({ msg: 'Supervisor removed from group', groupName: group.name });
+    } catch (err) {
+        res.status(500).json({ msg: 'Server Error', error: err.message });
+    }
+};
+
 // Get All Groups
 exports.getAllGroups = async (req, res) => {
     try {

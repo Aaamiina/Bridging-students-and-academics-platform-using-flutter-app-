@@ -5,7 +5,8 @@ const {
   getAllGroups, 
   assignMembers, 
   deleteGroup, 
-  assignSupervisor 
+  assignSupervisor,
+  unassignSupervisor 
 } = require('../../controllers/adminController/groupController');
 const { protect, authorize } = require('../../middleware/authMiddleware');
 
@@ -23,6 +24,7 @@ router.route('/')
 
 // 4. Dynamic routes (MUST be at the bottom)
 router.put('/:groupId/assign', assignMembers);
+router.put('/:groupId/unassign-supervisor', unassignSupervisor);
 router.delete('/:groupId', deleteGroup);
 
 module.exports = router;

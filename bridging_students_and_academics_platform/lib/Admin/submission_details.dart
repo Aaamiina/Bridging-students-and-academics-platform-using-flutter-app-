@@ -1,4 +1,6 @@
+import 'package:bridging_students_and_academics_platform/core/app_config.dart';
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SubmissionDetailsPage extends StatelessWidget {
   // These fields must be passed when you navigate to this page
@@ -62,12 +64,8 @@ class SubmissionDetailsPage extends StatelessWidget {
             _buildWhiteCard("Submission Content", contentDescription),
             const SizedBox(height: 20),
 
-            // File Card
-            _buildFileCard(fileName),
-            const SizedBox(height: 30),
-
-            // Action Buttons
-            _buildActionButtons(context),
+            // File Card with Download
+            _buildFileCard(context, fileName),
           ],
         ),
       ),
@@ -111,32 +109,51 @@ class SubmissionDetailsPage extends StatelessWidget {
     );
   }
 
-  Widget _buildFileCard(String fileName) {
+  Widget _buildFileCard(BuildContext context, String fileName) {
+    final String downloadUrl = fileName.startsWith('http')
+        ? fileName
+        : '${AppConfig.imageBaseUrl}$fileName';
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 30),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(15)),
-      child: Center(child: Text(fileName, style: const TextStyle(fontWeight: FontWeight.w500))),
-    );
-  }
-
-  Widget _buildActionButtons(BuildContext context) {
-    return Row(
-      children: [
-        Expanded(child: _buildButton("Approve", const Color(0xFF4A6D3F))),
-        const SizedBox(width: 15),
-        Expanded(child: _buildButton("Rejected", const Color(0xFFD32F2F))),
-      ],
-    );
-  }
-
-  Widget _buildButton(String text, Color color) {
-    return SizedBox(
-      height: 55,
-      child: ElevatedButton(
-        style: ElevatedButton.styleFrom(backgroundColor: color, shape: const StadiumBorder()),
-        onPressed: () {},
-        child: Text(text, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.insert_drive_file, color: const Color(0xFF4A6D3F), size: 28),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  fileName.split('/').last,
+                  style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 14),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                final uri = Uri.parse(downloadUrl);
+                if (await canLaunchUrl(uri)) {
+                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                }
+              },
+              icon: const Icon(Icons.download, color: Colors.white, size: 20),
+              label: const Text('Download Document', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF4A6D3F),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

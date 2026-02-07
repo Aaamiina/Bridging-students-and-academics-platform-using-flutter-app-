@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 class AdminGroupMembersPage extends StatefulWidget {
   const AdminGroupMembersPage({super.key});
@@ -55,13 +55,13 @@ class _AdminGroupMembersPageState extends State<AdminGroupMembersPage>
             Container(
               padding: const EdgeInsets.only(top: 40, left: 16, right: 16, bottom: 16),
               decoration: const BoxDecoration(
-                color: Color(0xFF4F7F3B),
+                color: Color(0xFF4A6D3F),
               ),
               child: Row(
                 children: [
                   GestureDetector(
                     onTap: () => Navigator.pop(context),
-                    child: const Icon(Icons.arrow_back, color: Colors.white),
+                    child: const Icon(Icons.arrow_back_ios_new, color: Colors.white, size: 20),
                   ),
                   const SizedBox(width: 16),
                   const Text(
@@ -94,7 +94,7 @@ class _AdminGroupMembersPageState extends State<AdminGroupMembersPage>
                 child: TextField(
                   onChanged: (val) => setState(() => _searchQuery = val),
                   decoration: const InputDecoration(
-                    prefixIcon: Icon(Icons.search),
+                    prefixIcon: Icon(Icons.search_rounded, color: Color(0xFF757575)),
                     hintText: "Search..",
                     border: InputBorder.none,
                   ),
@@ -128,17 +128,29 @@ class _AdminGroupMembersPageState extends State<AdminGroupMembersPage>
       ),
 
       // BOTTOM NAV
-      bottomNavigationBar: BottomNavigationBar(
-        type: BottomNavigationBarType.fixed,
-        backgroundColor: const Color(0xFF4F7F3B),
-        selectedItemColor: Colors.white,
-        unselectedItemColor: Colors.white70,
-        items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
-          BottomNavigationBarItem(icon: Icon(Icons.checklist), label: "Task"),
-          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: "Submission"),
-          BottomNavigationBarItem(icon: Icon(Icons.person), label: "Profile"),
-        ],
+      bottomNavigationBar: Container(
+        decoration: const BoxDecoration(
+          color: Color(0xFF4A6D3F),
+          borderRadius: BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+        ),
+        child: ClipRRect(
+          borderRadius: const BorderRadius.only(topLeft: Radius.circular(24), topRight: Radius.circular(24)),
+          child: BottomNavigationBar(
+            type: BottomNavigationBarType.fixed,
+            backgroundColor: Colors.transparent,
+            elevation: 0,
+            selectedItemColor: Colors.white,
+            unselectedItemColor: Colors.white70,
+            selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+            unselectedLabelStyle: const TextStyle(fontSize: 11),
+            items: const [
+              BottomNavigationBarItem(icon: Icon(Icons.home_rounded, size: 24), label: "Home"),
+              BottomNavigationBarItem(icon: Icon(Icons.task_alt_rounded, size: 24), label: "Task"),
+              BottomNavigationBarItem(icon: Icon(Icons.assignment_rounded, size: 24), label: "Submission"),
+              BottomNavigationBarItem(icon: Icon(Icons.person_rounded, size: 24), label: "Profile"),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -210,7 +222,7 @@ Widget _memberCard(Map<String, String> member) {
               style: TextStyle(
                 fontFamily: 'InriaSerif',
                 fontSize: 13,
-                color: Color(0xFF4F7F3B),
+                color: Color(0xFF4A6D3F),
                 fontWeight: FontWeight.bold,
               ),
             ),
@@ -296,7 +308,7 @@ Widget _memberDetailSheet(Map<String, String> member) {
                 style: TextStyle(
                   fontFamily: 'InriaSerif',
                   fontSize: 13,
-                  color: Color(0xFF4F7F3B),
+                  color: Color(0xFF4A6D3F),
                   fontWeight: FontWeight.bold,
                 ),
                 textAlign: TextAlign.center,

@@ -10,9 +10,10 @@ class StudentController extends GetxController {
   var tasks = <dynamic>[].obs;
   var feedbackList = <dynamic>[].obs;
 
-  /// Current student profile from database (name, group).
+  /// Current student profile from database (name, group, profileImage).
   var studentName = ''.obs;
   var studentGroup = ''.obs;
+  var studentProfileImage = Rxn<String>();
 
   @override
   void onInit() {
@@ -20,15 +21,23 @@ class StudentController extends GetxController {
     fetchTasks();
   }
 
-  /// Loads student name and group from the database; falls back to storage if API fails.
+  /// Loads student name, group, and profile image from the database; falls back to storage if API fails.
   Future<void> fetchProfile() async {
     final data = await _repo.getMyProfile();
     if (data != null) {
       studentName.value = (data['name']?.toString() ?? '').trim();
       studentGroup.value = (data['group']?.toString() ?? '').trim();
+      final img = data['profileImage']?.toString()?.trim();
+      if (img != null && img.isNotEmpty) {
+        _storage.write('user_image', img);
+        studentProfileImage.value = img;
+      } else {
+        studentProfileImage.value = _storage.read('user_image')?.toString();
+      }
     } else {
       studentName.value = (_storage.read('user_name')?.toString() ?? '').trim();
       studentGroup.value = (_storage.read('user_group')?.toString() ?? '').trim();
+      studentProfileImage.value = _storage.read('user_image')?.toString();
     }
   }
   

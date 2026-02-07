@@ -70,17 +70,28 @@ exports.updateTask = async (req, res) => {
 // Delete Task
 exports.deleteTask = async (req, res) => {
     try {
-        const task = await Task.findById(req.params.id);
-        if (!task) return res.status(404).json({ msg: 'Task not found' });
+        const taskId = (req.params.id || '').trim();
+        if (!taskId) return res.status(400).json({ msg: 'Task ID is required' });
 
-        if (task.createdBy.toString() !== req.user.id) {
-            return res.status(401).json({ msg: 'User not authorized' });
+        if (!mongoose.Types.ObjectId.isValid(taskId)) {
+            return res.status(400).json({ msg: 'Invalid task ID format' });
         }
 
-        await Task.findByIdAndDelete(req.params.id);
+        const task = await Task.findById(taskId);
+        if (!task) {
+            console.log('DELETE task 404: id=', taskId);
+            return res.status(404).json({ msg: 'Task not found' });
+        }
+
+        if (task.createdBy && task.createdBy.toString() !== req.user.id) {
+            return res.status(403).json({ msg: 'Not authorized to delete this task' });
+        }
+
+        await Task.findByIdAndDelete(taskId);
         res.json({ msg: 'Task removed' });
     } catch (err) {
-        res.status(500).send('Server Error');
+        console.error('deleteTask error:', err);
+        res.status(500).json({ msg: 'Server Error' });
     }
 };
 

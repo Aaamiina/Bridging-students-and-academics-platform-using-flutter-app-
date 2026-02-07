@@ -106,5 +106,8 @@ flutter_native_splash:
   color: "#ffffff"        # background color
   image: assets/images/splash.jpeg
   color_dark: "#000000"
+  android_gravity: fill   # image covers full screen on Android
+  ios_content_mode: scaleAspectFill   # image covers full screen on iOS
+  web_image_mode: cover   # image covers full screen on web
   android: true
   ios: true
